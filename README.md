@@ -20,6 +20,10 @@ python3 game.py
 - macOS / Linux：`install_and_run.sh`
 - Windows：`install_and_run.bat`
 
+> 你问“点哪个 BAT？”：  
+> - **源码目录里**点 `install_and_run.bat`  
+> - **打包后的 zip 解压目录里**点 `start.bat`
+
 ### 路线 B：打包成可分发文件
 
 - 通用 zip（需要目标机器有 Python）：

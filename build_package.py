@@ -34,15 +34,28 @@ def write_launchers() -> None:
     launcher_bat = PACKAGE_DIR / "start.bat"
     launcher_bat.write_text(
         "@echo off\r\n"
+        "setlocal\r\n"
         "chcp 65001 >nul\r\n"
+        "cd /d %~dp0\r\n"
+        "echo [启动中] 修仙模拟人生（Windows 启动器）...\r\n"
         "where python >nul 2>nul\r\n"
         "if errorlevel 1 (\r\n"
-        "  echo [错误] 未检测到 Python，请先安装 Python 3，或使用 Windows EXE 打包版。\r\n"
+        "  echo [错误] 未检测到 Python 3。\r\n"
+        "  echo 请安装 Python 3，或使用 Windows EXE 打包版。\r\n"
         "  pause\r\n"
         "  exit /b 1\r\n"
         ")\r\n"
         "python game.py\r\n"
-        "pause\r\n",
+        "set ERR=%ERRORLEVEL%\r\n"
+        "if not \"%ERR%\"==\"0\" (\r\n"
+        "  echo.\r\n"
+        "  echo [程序异常退出] 错误码: %ERR%\r\n"
+        "  echo 请确认：已解压后再运行、Python 可用。\r\n"
+        ")\r\n"
+        "echo.\r\n"
+        "echo [结束] 按任意键关闭窗口...\r\n"
+        "pause >nul\r\n"
+        "exit /b %ERR%\r\n",
         encoding="utf-8",
     )
 
@@ -58,6 +71,8 @@ def build() -> None:
         (PACKAGE_DIR / "install_and_run.sh").chmod(0o755)
     if (ROOT / "install_and_run.bat").exists():
         shutil.copy2(ROOT / "install_and_run.bat", PACKAGE_DIR / "install_and_run.bat")
+    if (ROOT / "start_windows.bat").exists():
+        shutil.copy2(ROOT / "start_windows.bat", PACKAGE_DIR / "start_windows.bat")
     write_launchers()
 
     with zipfile.ZipFile(ZIP_PATH, "w", compression=zipfile.ZIP_DEFLATED) as zf:
