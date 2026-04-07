@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>修仙模拟人生（网页版）</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; background: #111; color: #eee; }
+    .wrap { max-width: 900px; margin: 0 auto; padding: 16px; }
+    .card { background: #1d1d1d; border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+    button { margin: 4px; padding: 8px 12px; border: 0; border-radius: 8px; background: #3559e0; color: #fff; cursor: pointer; }
+    button:hover { opacity: .9; }
+    #log { white-space: pre-wrap; max-height: 320px; overflow: auto; background: #0d0d0d; padding: 10px; border-radius: 8px; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .small { font-size: 13px; color: #aaa; }
+    input { padding: 8px; border-radius: 8px; border: 1px solid #444; background: #121212; color: #fff; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>修仙模拟人生（网页版）</h1>
+    <p class="small">不需要 Python，双击本文件即可游玩。也可用浏览器打开。</p>
+
+    <div class="card">
+      <label>道号：<input id="nameInput" value="无名散修" /></label>
+      <button id="startBtn">开始新人生</button>
+      <button id="restartBtn">重开</button>
+    </div>
+
+    <div class="card" id="status"></div>
+
+    <div class="card">
+      <div class="row">
+        <button data-act="cultivate">打坐修炼</button>
+        <button data-act="explore">外出历练</button>
+        <button data-act="social">结识NPC</button>
+        <button data-act="market">坊市交易</button>
+        <button data-act="rest">休整</button>
+        <button data-act="next">结束回合</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div id="log"></div>
+    </div>
+  </div>
+
+  <script>
+    const stages = [[0,'凡人'],[120,'炼气'],[320,'筑基'],[650,'金丹'],[1100,'元婴'],[1800,'化神']];
+    const names = ['叶清寒','林知秋','顾长歌','苏晚晴','秦墨','沈听雨','白若雪'];
+    const places = ['青石镇','灵溪谷','万剑城','玄霜海'];
+
+    let S = null;
+
+    function rnd(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+    function stage(v){ let s='凡人'; for(const [n,name] of stages){ if(v>=n) s=name; } return s; }
+    function log(t){ const el=document.getElementById('log'); el.textContent += (el.textContent?"\n":"") + t; el.scrollTop=el.scrollHeight; }
+
+    function render(){
+      if(!S){ document.getElementById('status').innerHTML = '点击“开始新人生”'; return; }
+      document.getElementById('status').innerHTML = `
+        <b>${S.name}</b>｜第 ${S.turn} 年｜地点：${S.place}<br>
+        境界：${stage(S.cult)}（修为 ${S.cult}）<br>
+        气血：${S.hp}/120｜灵石：${S.stones}｜声望：${S.rep}<br>
+        关系网：${Object.keys(S.social).length} 人
+      `;
+    }
+
+    function start(){
+      S = { name: document.getElementById('nameInput').value || '无名散修', turn:1, hp:120, cult:0, stones:30, rep:0, place:places[0], social:{} };
+      document.getElementById('log').textContent='';
+      log('你踏上修仙之路。');
+      render();
+    }
+
+    function tick(){
+      S.turn += 1;
+      S.place = places[rnd(0,places.length-1)];
+      if(S.turn % 6 === 0){ S.hp = Math.max(1, S.hp - rnd(3,10)); log('岁月侵蚀，你感到些许疲惫。'); }
+      if(S.cult >= 1800){ log('你踏入化神，名震天下！'); }
+      render();
+    }
+
+    const acts = {
+      cultivate(){ const g=rnd(20,45); S.cult+=g; S.hp=Math.max(1,S.hp-rnd(1,6)); log(`你闭关修炼，修为 +${g}。`); },
+      explore(){ const g=rnd(8,35), hurt=rnd(0,16); S.cult+=g; S.hp=Math.max(0,S.hp-hurt); S.stones+=rnd(2,16); log(`你历练归来，修为 +${g}，受伤 ${hurt}。`); if(S.hp<=0) log('你重伤倒地，本世终结。点“重开”继续。'); },
+      social(){ const n=names[rnd(0,names.length-1)]; S.social[n]=(S.social[n]||0)+rnd(5,15); S.rep+=1; log(`你结识了 ${n}，好感提升。`); },
+      market(){ if(S.stones<10){ log('灵石不足，无法交易。'); return; } S.stones-=10; S.hp=Math.min(120,S.hp+rnd(8,20)); log('你购买丹药并疗伤。'); },
+      rest(){ S.hp=Math.min(120,S.hp+rnd(10,22)); log('你静心休整，状态恢复。'); },
+      next(){ tick(); }
+    };
+
+    document.getElementById('startBtn').onclick = start;
+    document.getElementById('restartBtn').onclick = start;
+    document.querySelectorAll('button[data-act]').forEach(btn=>{
+      btn.onclick = ()=>{ if(!S) return; acts[btn.dataset.act](); render(); };
+    });
+
+    render();
+  </script>
+</body>
+</html>
