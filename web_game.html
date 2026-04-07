@@ -74,25 +74,39 @@
 
   <div class="grid3">
     <div class="panel">
-      <h3>修行 / 历练 / 商店</h3>
+      <h3>修炼面板</h3>
       <div class="row">
         <button data-act="cultivate">闭关修炼（-8）</button>
-        <button data-act="explore">外出历练（-10）</button>
-        <button data-act="dungeon">秘境探索（-14）</button>
-        <button data-act="rest" class="alt">静修休整（-3）</button>
-        <button data-act="shop">坊市交易（-4）</button>
-        <button data-act="craft">炼器打造（-6 + 灵石）</button>
         <button data-act="study">参悟功法（需残卷，-7）</button>
         <button data-act="breakthrough">冲击境界（-9）</button>
-        <button data-act="treasure">寻宝鉴宝（-8）</button>
-        <button data-act="use_item" class="warn">使用物品</button>
-        <button data-act="next" class="alt">结束回合</button>
+        <button data-act="rest" class="alt">静修休整（-3）</button>
       </div>
-      <div id="inventory"></div>
     </div>
 
     <div class="panel">
-      <h3>NPC互动 / 队伍</h3>
+      <h3>探索面板</h3>
+      <div class="row">
+        <button data-act="explore">外出历练（-10）</button>
+        <button data-act="dungeon">秘境探索（-14）</button>
+        <button data-act="treasure">寻宝鉴宝（-8）</button>
+        <button data-act="next" class="alt">结束回合</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>交易与工坊面板</h3>
+      <div class="row">
+        <button data-act="shop">坊市交易（-4）</button>
+        <button data-act="craft">炼器打造（-6 + 灵石）</button>
+        <button data-act="use_item" class="warn">使用物品</button>
+      </div>
+      <div id="inventory"></div>
+    </div>
+  </div>
+
+  <div class="grid3">
+    <div class="panel">
+      <h3>NPC交流面板</h3>
       <div class="row">
         <select id="npcSelect"></select>
         <button data-act="talk">论道（-5）</button>
@@ -101,8 +115,6 @@
         <button data-act="propose">结为道侣（-5）</button>
         <button data-act="bond">结拜（-4）</button>
         <button data-act="rival">结仇（-4）</button>
-        <button data-act="fight_npc">主动开战（-9）</button>
-        <button data-act="extort_npc">勒索（-6）</button>
         <button data-act="recruit">招募入队（-4）</button>
       </div>
       <div id="socialBoard"></div>
@@ -110,23 +122,50 @@
     </div>
 
     <div class="panel">
-      <h3>任务 / 家族</h3>
+      <h3>冲突面板</h3>
       <div class="row">
-        <button data-act="refresh_quests">刷新任务榜（-4）</button>
-        <button data-act="accept_quest">接取选中任务（-2）</button>
+        <button data-act="fight_npc">主动开战（-9）</button>
+        <button data-act="extort_npc">勒索（-6）</button>
+        <button data-act="rescue">营救人质（-10）</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>宗门与任务面板</h3>
+      <div class="row">
         <button data-act="join_faction">加入/切换门派（-3）</button>
         <button data-act="sect_duty">宗门事务（-5）</button>
+        <button data-act="refresh_quests">刷新任务榜（-4）</button>
+        <button data-act="accept_quest">接取选中任务（-2）</button>
+      </div>
+      <select id="questSelect"></select>
+      <div id="questBoard"></div>
+    </div>
+  </div>
+
+  <div class="grid3">
+    <div class="panel">
+      <h3>地产建造面板</h3>
+      <div class="row">
         <button data-act="buy_land">购置灵地（-4）</button>
         <button data-act="construct">营造建筑（-8）</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>家族传承面板</h3>
+      <div class="row">
         <button data-act="family">家族经营（-6）</button>
-        <button data-act="rescue">营救人质（-10）</button>
         <button data-act="fertility">生息秘法（-8）</button>
         <select id="heirSelect"></select>
         <button data-act="inherit">继承继续（无消耗）</button>
         <button data-act="heir">传位（无消耗）</button>
       </div>
-      <select id="questSelect"></select>
-      <div id="questBoard"></div>
+    </div>
+
+    <div class="panel">
+      <h3>运行控制面板</h3>
+      <div class="small">当前玩法已拆分为独立面板：修炼、探索、交易、交流、冲突、宗门、地产、家族。</div>
     </div>
   </div>
 
