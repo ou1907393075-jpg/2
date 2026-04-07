@@ -39,6 +39,11 @@ python3 game.py
 2. 只运行 `install_and_run.bat` 或 `start.bat`  
 3. 不要在压缩包内部直接双击运行（先解压）  
 
+如果你看到“Starting game...”后没反应：  
+1) 按一下回车，看是否出现“请输入道号”  
+2) 确认不是在压缩包内直接运行  
+3) 优先双击 `start_windows.bat`（源码）或 `start.bat`（打包目录）
+
 ### Windows 错误码 `9009`
 
 `9009` 基本就是“命令找不到”，通常是 Python 没装好或没进 PATH。  
