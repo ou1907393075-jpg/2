@@ -49,6 +49,8 @@ python3 game.py
 2. 重新打开终端，执行 `py -3 --version` 或 `python --version` 验证  
 3. 再双击 `install_and_run.bat` / `start.bat`  
 
+如果 `py -3 --version` 都失败，建议直接使用 EXE 包游玩（无需 Python）。
+
 ### 路线 B：打包成可分发文件
 
 - 通用 zip（需要目标机器有 Python）：

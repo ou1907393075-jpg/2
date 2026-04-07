@@ -3,42 +3,44 @@ setlocal
 cd /d %~dp0
 
 echo [INFO] Starting game...
+set ERR=0
 
 if exist xianxia_game.exe (
   echo [INFO] EXE detected. Running without Python...
   xianxia_game.exe
   set ERR=%ERRORLEVEL%
-  echo.
-  echo [INFO] Press any key to close...
-  pause >nul
-  exit /b %ERR%
+  goto :end
 )
 
-set RUNNER=
 where py >nul 2>nul
-if not errorlevel 1 set RUNNER=py -3
-if "%RUNNER%"=="" (
-  where python >nul 2>nul
-  if not errorlevel 1 set RUNNER=python
+if not errorlevel 1 (
+  echo [INFO] Using: py -3 game.py
+  py -3 game.py
+  set ERR=%ERRORLEVEL%
+  goto :after_run
 )
 
-if "%RUNNER%"=="" (
-  echo [ERROR] No Python runtime found.
-  echo You can avoid Python completely by using the EXE package:
-  echo dist_windows\xianxia-game-windows-exe.zip
-  echo.
-  pause
-  exit /b 1
+where python >nul 2>nul
+if not errorlevel 1 (
+  echo [INFO] Using: python game.py
+  python game.py
+  set ERR=%ERRORLEVEL%
+  goto :after_run
 )
 
-%RUNNER% game.py
-set ERR=%ERRORLEVEL%
+echo [ERROR] No Python runtime found.
+echo Use EXE package: dist_windows\xianxia-game-windows-exe.zip
+set ERR=9009
+goto :end
+
+:after_run
 if not "%ERR%"=="0" (
   echo.
   echo [ERROR] Program exited with code: %ERR%
-  if "%ERR%"=="9009" echo [HINT] Runtime command not found. Reinstall Python and enable PATH.
+  if "%ERR%"=="9009" echo [HINT] Command not found. Check py/python installation.
 )
 
+:end
 echo.
 echo [INFO] Press any key to close...
 pause >nul
