@@ -53,6 +53,11 @@ def build() -> None:
 
     shutil.copy2(ROOT / "game.py", PACKAGE_DIR / "game.py")
     shutil.copy2(ROOT / "README.md", PACKAGE_DIR / "README.md")
+    if (ROOT / "install_and_run.sh").exists():
+        shutil.copy2(ROOT / "install_and_run.sh", PACKAGE_DIR / "install_and_run.sh")
+        (PACKAGE_DIR / "install_and_run.sh").chmod(0o755)
+    if (ROOT / "install_and_run.bat").exists():
+        shutil.copy2(ROOT / "install_and_run.bat", PACKAGE_DIR / "install_and_run.bat")
     write_launchers()
 
     with zipfile.ZipFile(ZIP_PATH, "w", compression=zipfile.ZIP_DEFLATED) as zf:

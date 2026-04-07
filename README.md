@@ -2,6 +2,41 @@
 
 这是一个命令行修仙模拟游戏，你可以在多个地点自由行动，和大量 NPC 建立关系、接任务、切磋、交易、打探情报，并在动态变化的修真世界中成长。
 
+## 先说最简单：怎么安装 / 运行
+
+你下载下来的确是源码，不是现成安装包。可以按下面 2 条路线走：
+
+### 路线 A：直接运行源码（最快）
+
+1. 安装 Python 3  
+2. 进入项目目录运行：
+
+```bash
+python3 game.py
+```
+
+如果你不想记命令，也可以直接双击：
+
+- macOS / Linux：`install_and_run.sh`
+- Windows：`install_and_run.bat`
+
+### 路线 B：打包成可分发文件
+
+- 通用 zip（需要目标机器有 Python）：
+
+```bash
+python3 build_package.py
+```
+
+- Windows 无需 Python 的 EXE（推荐发给普通玩家）：
+
+```bash
+pip install pyinstaller
+python build_windows_exe.py
+```
+
+---
+
 ## 下载与打包说明（无二进制入库）
 
 当前仓库**不提交二进制产物**（如 `.zip`），避免平台兼容/审查问题。你可以在本地一键打包：
