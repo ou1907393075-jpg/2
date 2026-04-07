@@ -34,6 +34,15 @@ python3 game.py
 2. 只运行 `install_and_run.bat` 或 `start.bat`  
 3. 不要在压缩包内部直接双击运行（先解压）  
 
+### Windows 错误码 `9009`
+
+`9009` 基本就是“命令找不到”，通常是 Python 没装好或没进 PATH。  
+新版启动器会优先尝试 `py -3`，再尝试 `python`。如果仍失败，请：
+
+1. 安装 Python 3（官网安装时勾选 **Add python.exe to PATH**）  
+2. 重新打开终端，执行 `py -3 --version` 或 `python --version` 验证  
+3. 再双击 `install_and_run.bat` / `start.bat`  
+
 ### 路线 B：打包成可分发文件
 
 - 通用 zip（需要目标机器有 Python）：
