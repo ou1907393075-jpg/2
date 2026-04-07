@@ -9,12 +9,12 @@
     body{margin:0;background:radial-gradient(circle at top,#1b2c57,#08101f 55%);color:var(--txt);font-family:system-ui,sans-serif}
     .wrap{max-width:1280px;margin:0 auto;padding:16px}
     .panel{background:rgba(18,28,51,.94);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
-    .grid{display:grid;grid-template-columns:1.4fr 1fr;gap:12px}
-    .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-    @media(max-width:1080px){.grid,.grid3{grid-template-columns:1fr}}
     .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
     button{border:0;padding:8px 12px;border-radius:8px;background:#3b82f6;color:#fff;cursor:pointer}
     button.alt{background:#64748b} button.warn{background:#f59e0b} button.bad{background:#ef4444}
+    .tabbar{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px}
+    .tabbar button{background:#334155}
+    .tabbar button.active{background:#2563eb}
     select,input{background:#0b1530;color:#fff;border:1px solid var(--line);border-radius:8px;padding:7px}
     .small{font-size:12px;color:var(--sub)}
     .bar{height:8px;background:#0a1327;border:1px solid #3a4f75;border-radius:999px;overflow:hidden}
@@ -24,12 +24,31 @@
     .node{padding:8px;border:1px solid var(--line);border-radius:8px;background:#0e1831}
     .node.me{outline:2px solid #22c55e;background:#122844}
     .danger{color:#ff9a9a}.ok{color:#8ef7b4}
+    .view-panel{display:none}
+    .view-panel.active{display:block}
   </style>
 </head>
 <body>
 <div class="wrap">
   <h1>修仙模拟人生（网页深度版）</h1>
-  <div class="panel" id="startPanel">
+  <div class="tabbar" id="tabbar">
+    <button data-view-target="startPanel" class="active">开局</button>
+    <button data-view-target="statusPanel">人物属性</button>
+    <button data-view-target="mapPanel">地图移动</button>
+    <button data-view-target="cultivatePanel">修炼</button>
+    <button data-view-target="explorePanel">探索</button>
+    <button data-view-target="tradePanel">交易工坊</button>
+    <button data-view-target="socialPanel">NPC交流</button>
+    <button data-view-target="conflictPanel">冲突</button>
+    <button data-view-target="sectPanel">宗门任务</button>
+    <button data-view-target="estatePanel">地产建造</button>
+    <button data-view-target="familyPanel">家族传承</button>
+    <button data-view-target="systemPanel">系统总览</button>
+    <button data-view-target="battlePanel" id="battleTab">战斗</button>
+    <button data-view-target="logPanel">日志</button>
+  </div>
+
+  <div class="panel view-panel active" id="startPanel">
     <div class="row">
       <label>道号：<input id="nameInput" value="无名散修" /></label>
       <label>性别：
@@ -55,122 +74,115 @@
     <div class="small">这版加入：地图移动、体力约束、战斗内技能回合、任务看板、NPC目标互动、队伍管理、家族子嗣培养、可持续存档。</div>
   </div>
 
-  <div class="grid">
-    <div class="panel">
-      <h3>角色与状态</h3>
-      <div id="status"></div>
-      <div class="small">每次行动消耗体力；回合结束恢复气血/真气/体力并触发世界演化。</div>
+  <div class="panel view-panel" id="statusPanel">
+    <h3>角色与状态</h3>
+    <div id="status"></div>
+    <div class="small">每次行动消耗体力；回合结束恢复气血/真气/体力并触发世界演化。</div>
+  </div>
+
+  <div class="panel view-panel" id="mapPanel">
+    <h3>地图与移动</h3>
+    <div id="map" class="map"></div>
+    <div class="row" style="margin-top:8px">
+      <select id="destSelect"></select>
+      <button id="moveBtn">前往地点（-5体力）</button>
     </div>
-    <div class="panel">
-      <h3>地图与移动</h3>
-      <div id="map" class="map"></div>
-      <div class="row" style="margin-top:8px">
-        <select id="destSelect"></select>
-        <button id="moveBtn">前往地点（-5体力）</button>
-      </div>
-      <div class="small" id="moveHint"></div>
+    <div class="small" id="moveHint"></div>
+  </div>
+
+  <div class="panel view-panel" id="cultivatePanel">
+    <h3>修炼面板</h3>
+    <div class="row">
+      <button data-act="cultivate">闭关修炼（-8）</button>
+      <button data-act="study">参悟功法（需残卷，-7）</button>
+      <button data-act="breakthrough">冲击境界（-9）</button>
+      <button data-act="rest" class="alt">静修休整（-3）</button>
     </div>
   </div>
 
-  <div class="grid3">
-    <div class="panel">
-      <h3>修炼面板</h3>
-      <div class="row">
-        <button data-act="cultivate">闭关修炼（-8）</button>
-        <button data-act="study">参悟功法（需残卷，-7）</button>
-        <button data-act="breakthrough">冲击境界（-9）</button>
-        <button data-act="rest" class="alt">静修休整（-3）</button>
-      </div>
-    </div>
-
-    <div class="panel">
-      <h3>探索面板</h3>
-      <div class="row">
-        <button data-act="explore">外出历练（-10）</button>
-        <button data-act="dungeon">秘境探索（-14）</button>
-        <button data-act="treasure">寻宝鉴宝（-8）</button>
-        <button data-act="next" class="alt">结束回合</button>
-      </div>
-    </div>
-
-    <div class="panel">
-      <h3>交易与工坊面板</h3>
-      <div class="row">
-        <button data-act="shop">坊市交易（-4）</button>
-        <button data-act="craft">炼器打造（-6 + 灵石）</button>
-        <button data-act="use_item" class="warn">使用物品</button>
-      </div>
-      <div id="inventory"></div>
+  <div class="panel view-panel" id="explorePanel">
+    <h3>探索面板</h3>
+    <div class="row">
+      <button data-act="explore">外出历练（-10）</button>
+      <button data-act="dungeon">秘境探索（-14）</button>
+      <button data-act="treasure">寻宝鉴宝（-8）</button>
+      <button data-act="next" class="alt">结束回合</button>
     </div>
   </div>
 
-  <div class="grid3">
-    <div class="panel">
-      <h3>NPC交流面板</h3>
-      <div class="row">
-        <select id="npcSelect"></select>
-        <button data-act="talk">论道（-5）</button>
-        <button data-act="gift">赠礼（-4 + 灵石）</button>
-        <button data-act="duel">切磋（-8）</button>
-        <button data-act="propose">结为道侣（-5）</button>
-        <button data-act="bond">结拜（-4）</button>
-        <button data-act="rival">结仇（-4）</button>
-        <button data-act="recruit">招募入队（-4）</button>
-      </div>
-      <div id="socialBoard"></div>
-      <div id="relationBoard"></div>
+  <div class="panel view-panel" id="tradePanel">
+    <h3>交易与工坊面板</h3>
+    <div class="row">
+      <button data-act="shop">坊市交易（-4）</button>
+      <button data-act="craft">炼器打造（-6 + 灵石）</button>
+      <button data-act="use_item" class="warn">使用物品</button>
     </div>
+    <div id="inventory"></div>
+  </div>
 
-    <div class="panel">
-      <h3>冲突面板</h3>
-      <div class="row">
-        <button data-act="fight_npc">主动开战（-9）</button>
-        <button data-act="extort_npc">勒索（-6）</button>
-        <button data-act="rescue">营救人质（-10）</button>
-      </div>
+  <div class="panel view-panel" id="socialPanel">
+    <h3>NPC交流面板</h3>
+    <div class="row">
+      <select id="npcSelect"></select>
+      <button data-act="talk">论道（-5）</button>
+      <button data-act="gift">赠礼（-4 + 灵石）</button>
+      <button data-act="duel">切磋（-8）</button>
+      <button data-act="propose">结为道侣（-5）</button>
+      <button data-act="bond">结拜（-4）</button>
+      <button data-act="rival">结仇（-4）</button>
+      <button data-act="recruit">招募入队（-4）</button>
     </div>
+    <div id="socialBoard"></div>
+    <div id="relationBoard"></div>
+  </div>
 
-    <div class="panel">
-      <h3>宗门与任务面板</h3>
-      <div class="row">
-        <button data-act="join_faction">加入/切换门派（-3）</button>
-        <button data-act="sect_duty">宗门事务（-5）</button>
-        <button data-act="refresh_quests">刷新任务榜（-4）</button>
-        <button data-act="accept_quest">接取选中任务（-2）</button>
-      </div>
-      <select id="questSelect"></select>
-      <div id="questBoard"></div>
+  <div class="panel view-panel" id="conflictPanel">
+    <h3>冲突面板</h3>
+    <div class="row">
+      <button data-act="fight_npc">主动开战（-9）</button>
+      <button data-act="extort_npc">勒索（-6）</button>
+      <button data-act="rescue">营救人质（-10）</button>
     </div>
   </div>
 
-  <div class="grid3">
-    <div class="panel">
-      <h3>地产建造面板</h3>
-      <div class="row">
-        <button data-act="buy_land">购置灵地（-4）</button>
-        <button data-act="construct">营造建筑（-8）</button>
-      </div>
+  <div class="panel view-panel" id="sectPanel">
+    <h3>宗门与任务面板</h3>
+    <div class="row">
+      <button data-act="join_faction">加入/切换门派（-3）</button>
+      <button data-act="sect_duty">宗门事务（-5）</button>
+      <button data-act="refresh_quests">刷新任务榜（-4）</button>
+      <button data-act="accept_quest">接取选中任务（-2）</button>
     </div>
+    <select id="questSelect"></select>
+    <div id="questBoard"></div>
+  </div>
 
-    <div class="panel">
-      <h3>家族传承面板</h3>
-      <div class="row">
-        <button data-act="family">家族经营（-6）</button>
-        <button data-act="fertility">生息秘法（-8）</button>
-        <select id="heirSelect"></select>
-        <button data-act="inherit">继承继续（无消耗）</button>
-        <button data-act="heir">传位（无消耗）</button>
-      </div>
-    </div>
-
-    <div class="panel">
-      <h3>运行控制面板</h3>
-      <div class="small">当前玩法已拆分为独立面板：修炼、探索、交易、交流、冲突、宗门、地产、家族。</div>
-      <div id="traitPanel" class="small" style="margin-top:8px"></div>
+  <div class="panel view-panel" id="estatePanel">
+    <h3>地产建造面板</h3>
+    <div class="row">
+      <button data-act="buy_land">购置灵地（-4）</button>
+      <button data-act="construct">营造建筑（-8）</button>
     </div>
   </div>
 
-  <div class="panel" id="battlePanel" style="display:none">
+  <div class="panel view-panel" id="familyPanel">
+    <h3>家族传承面板</h3>
+    <div class="row">
+      <button data-act="family">家族经营（-6）</button>
+      <button data-act="fertility">生息秘法（-8）</button>
+      <select id="heirSelect"></select>
+      <button data-act="inherit">继承继续（无消耗）</button>
+      <button data-act="heir">传位（无消耗）</button>
+    </div>
+  </div>
+
+  <div class="panel view-panel" id="systemPanel">
+    <h3>运行控制面板</h3>
+    <div class="small">所有系统已拆分为独立面板（人物属性、地图、修炼、探索、交易、社交、冲突、宗门、地产、家族）。当前界面一次仅显示一个面板，点击顶部按钮切换。</div>
+    <div id="traitPanel" class="small" style="margin-top:8px"></div>
+  </div>
+
+  <div class="panel view-panel" id="battlePanel">
     <h3>战斗界面（回合制）</h3>
     <div id="battleStatus"></div>
     <div class="row">
@@ -183,7 +195,7 @@
     </div>
   </div>
 
-  <div class="panel"><h3>日志</h3><div id="log"></div></div>
+  <div class="panel view-panel" id="logPanel"><h3>日志</h3><div id="log"></div></div>
 </div>
 
 <script>
@@ -242,6 +254,12 @@ const rand=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
 const pick=a=>a[rand(0,a.length-1)];
 const stage=v=>STAGES.reduce((s,[n,t])=>v>=n?t:s,'凡人');
 const p=()=>W.player;
+let activePanel='startPanel';
+function switchPanel(id){
+  activePanel=id;
+  document.querySelectorAll('.view-panel').forEach(el=>el.classList.toggle('active', el.id===id));
+  document.querySelectorAll('#tabbar button[data-view-target]').forEach(btn=>btn.classList.toggle('active', btn.dataset.viewTarget===id));
+}
 
 function buildTraitPool(){
   const out=[];
@@ -352,7 +370,6 @@ function syncSelectors(){
 
 function render(){
   if(!W){document.getElementById('status').textContent='点击“新人生”开始'; return}
-  document.getElementById('startPanel').style.display='none';
   const hp=Math.round(p().hp/p().maxHp*100), qi=Math.round(p().qi/p().maxQi*100), st=Math.round(p().stamina/p().maxStamina*100);
   document.getElementById('status').innerHTML=`
 <b>${p().name}</b>｜第${W.turn}季（约${(W.turn/4).toFixed(2)}年）｜${p().location}｜${stage(p().cultivation)}<br>
@@ -391,7 +408,9 @@ function render(){
   document.getElementById('questBoard').innerHTML=`<div class='small'>任务榜：${W.questBoard.map(q=>`${q.title}[${q.type}] ${q.progress}/${q.target}`).join('｜')||'空'}<br>进行中：${W.activeQuests.map(q=>`${q.title} ${q.progress}/${q.target}`).join('｜')||'无'}</div>`;
   document.getElementById('heirSelect').innerHTML = p().children.map((c,i)=>`<option value='${i}'>${c.name}(${c.gender||'?'},资质${c.talent})</option>`).join('') || '<option value=\"\">无可继承子嗣</option>';
 
-  document.getElementById('battlePanel').style.display=W.battle?'block':'none';
+  document.getElementById('battleTab').disabled=!W.battle;
+  if(activePanel==='battlePanel' && !W.battle){ switchPanel('statusPanel'); }
+  if(W.battle && activePanel!=='battlePanel'){ switchPanel('battlePanel'); }
   if(W.battle){
     const b=W.battle;
     document.getElementById('battleStatus').innerHTML=`敌人：${b.name}｜HP ${Math.max(0,b.hp)}<br>你：HP ${p().hp}/${p().maxHp}｜Qi ${p().qi}/${p().maxQi}`;
@@ -566,10 +585,11 @@ const acts={
 };
 
 function save(){localStorage.setItem('xianxia_web_save',JSON.stringify(W));log('存档成功。')}
-function load(){const raw=localStorage.getItem('xianxia_web_save');if(!raw){alert('没有存档');return;}W=JSON.parse(raw);log('读取存档成功。')}
+function load(){const raw=localStorage.getItem('xianxia_web_save');if(!raw){alert('没有存档');return;}W=JSON.parse(raw);log('读取存档成功。');switchPanel('statusPanel');}
 
 function bind(){
-  document.getElementById('newBtn').onclick=()=>{W=newWorld(document.getElementById('nameInput').value.trim(), document.getElementById('genderInput').value, document.getElementById('bgInput').value);W.questBoard=[genQuest(),genQuest(),genQuest()];W.player.traitKnowledge=[...W.player.permanentTraits.slice(0,3)];if(W.player.background!==document.getElementById('bgInput').value){log('你所选背景条件不足，已自动降格为可用背景。');} render();};
+  document.querySelectorAll('#tabbar button[data-view-target]').forEach(btn=>btn.onclick=()=>switchPanel(btn.dataset.viewTarget));
+  document.getElementById('newBtn').onclick=()=>{W=newWorld(document.getElementById('nameInput').value.trim(), document.getElementById('genderInput').value, document.getElementById('bgInput').value);W.questBoard=[genQuest(),genQuest(),genQuest()];W.player.traitKnowledge=[...W.player.permanentTraits.slice(0,3)];if(W.player.background!==document.getElementById('bgInput').value){log('你所选背景条件不足，已自动降格为可用背景。');} switchPanel('statusPanel'); render();};
   document.getElementById('saveBtn').onclick=()=>{if(!W)return;save();render();};
   document.getElementById('loadBtn').onclick=()=>{load();render();};
   document.getElementById('resetBtn').onclick=()=>{localStorage.removeItem('xianxia_web_save');alert('存档已清空');};
