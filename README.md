@@ -4,6 +4,11 @@
 
 ## 先说最简单：怎么安装 / 运行
 
+如果你不想装 Python，请直接使用 Windows EXE 包（解压即玩）：
+
+- `dist_windows/xianxia-game-windows-exe.zip`
+- 解压后双击 `xianxia_game.exe`（或 `start_windows.bat`）
+
 你下载下来的如果是源码仓库，可以按下面 2 条路线走：
 
 ### 路线 A：直接运行源码（最快）
@@ -37,6 +42,7 @@ python3 game.py
 ### Windows 错误码 `9009`
 
 `9009` 基本就是“命令找不到”，通常是 Python 没装好或没进 PATH。  
+如果你不想处理 Python 环境，直接用 EXE 包即可。  
 新版启动器会优先尝试 `py -3`，再尝试 `python`。如果仍失败，请：
 
 1. 安装 Python 3（官网安装时勾选 **Add python.exe to PATH**）  

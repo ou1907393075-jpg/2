@@ -3,6 +3,17 @@ setlocal
 cd /d %~dp0
 
 echo [INFO] Starting game...
+
+if exist xianxia_game.exe (
+  echo [INFO] EXE detected. Running without Python...
+  xianxia_game.exe
+  set ERR=%ERRORLEVEL%
+  echo.
+  echo [INFO] Press any key to close...
+  pause >nul
+  exit /b %ERR%
+)
+
 set RUNNER=
 where py >nul 2>nul
 if not errorlevel 1 set RUNNER=py -3
@@ -12,9 +23,9 @@ if "%RUNNER%"=="" (
 )
 
 if "%RUNNER%"=="" (
-  echo [ERROR] Python runtime not found.
-  echo Please install Python 3 from python.org and check "Add python.exe to PATH".
-  echo Or build EXE on Windows: python build_windows_exe.py
+  echo [ERROR] No Python runtime found.
+  echo You can avoid Python completely by using the EXE package:
+  echo dist_windows\xianxia-game-windows-exe.zip
   echo.
   pause
   exit /b 1
@@ -26,9 +37,6 @@ if not "%ERR%"=="0" (
   echo.
   echo [ERROR] Program exited with code: %ERR%
   if "%ERR%"=="9009" echo [HINT] Runtime command not found. Reinstall Python and enable PATH.
-  echo Common reasons:
-  echo 1^) Running inside zip. Please extract first.
-  echo 2^) Python environment issue.
 )
 
 echo.

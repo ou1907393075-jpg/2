@@ -49,6 +49,8 @@ def package() -> None:
     BUILD_DIR.mkdir(exist_ok=True)
     shutil.copy2(EXE_PATH, BUILD_DIR / EXE_NAME)
     shutil.copy2(ROOT / "README.md", BUILD_DIR / "README.md")
+    if (ROOT / "start_windows.bat").exists():
+        shutil.copy2(ROOT / "start_windows.bat", BUILD_DIR / "start_windows.bat")
 
     with zipfile.ZipFile(ZIP_PATH, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         for path in sorted(BUILD_DIR.iterdir()):
