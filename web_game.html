@@ -3,229 +3,196 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>修仙模拟人生（完整版网页）</title>
+  <title>修仙模拟人生（网页正式版）</title>
   <style>
-    body { font-family: system-ui,sans-serif; margin:0; background:#10131a; color:#e8ecf1; }
-    .wrap { max-width: 1100px; margin: 0 auto; padding: 16px; }
-    .card { background:#1a2230; border:1px solid #2c3a50; border-radius:10px; padding:12px; margin-bottom:12px; }
-    h1 { margin:0 0 12px; }
-    .row { display:flex; flex-wrap:wrap; gap:8px; }
-    button { border:0; border-radius:8px; padding:8px 12px; cursor:pointer; background:#3b82f6; color:#fff; }
-    button.alt { background:#475569; }
-    button.danger { background:#ef4444; }
-    input, select { background:#111827; color:#fff; border:1px solid #334155; border-radius:8px; padding:8px; }
-    #status, #lists { line-height:1.6; }
-    #log { white-space:pre-wrap; max-height:300px; overflow:auto; background:#0b1020; padding:10px; border-radius:8px; }
-    .grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-    @media (max-width: 900px){ .grid{ grid-template-columns:1fr; } }
-    .small { font-size:12px; color:#9fb0c7; }
+    :root{--bg:#0b1020;--panel:#151c2f;--line:#2c3a58;--text:#e8edf8;--sub:#9ab0d3;--ok:#22c55e;--warn:#f59e0b;--bad:#ef4444;}
+    body{margin:0;font-family:system-ui,sans-serif;background:radial-gradient(circle at 20% 0%,#1b2950, #0b1020 50%);color:var(--text)}
+    .wrap{max-width:1200px;margin:0 auto;padding:16px}
+    .panel{background:rgba(21,28,47,.94);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    .top{display:grid;grid-template-columns:2fr 1.2fr;gap:12px}
+    .mid{display:grid;grid-template-columns:1.5fr 1fr;gap:12px}
+    @media(max-width:980px){.top,.mid{grid-template-columns:1fr}}
+    .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+    h1,h3{margin:4px 0 10px}
+    button{border:0;background:#3b82f6;color:#fff;padding:8px 12px;border-radius:8px;cursor:pointer}
+    button:hover{filter:brightness(1.06)}
+    button.alt{background:#64748b} button.danger{background:#ef4444}
+    input{background:#0d1528;color:#fff;border:1px solid var(--line);border-radius:8px;padding:8px}
+    .small{font-size:12px;color:var(--sub)}
+    .bar{height:8px;background:#0c1324;border:1px solid #32405e;border-radius:99px;overflow:hidden}
+    .fill{height:100%}
+    .hp{background:linear-gradient(90deg,#f97316,#ef4444)} .qi{background:linear-gradient(90deg,#06b6d4,#3b82f6)} .sta{background:linear-gradient(90deg,#84cc16,#22c55e)}
+    #log{white-space:pre-wrap;max-height:320px;overflow:auto;background:#0a1122;border-radius:8px;padding:10px}
+    .map{display:grid;grid-template-columns:repeat(3,minmax(80px,1fr));gap:8px}
+    .node{padding:8px;border:1px solid var(--line);border-radius:8px;background:#0e1629}
+    .node.current{outline:2px solid #22c55e;background:#10253a}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>修仙模拟人生（完整版网页）</h1>
-    <div class="card">
-      <div class="row">
-        <label>道号：<input id="nameInput" value="无名散修" /></label>
-        <button id="newBtn">开始新人生</button>
-        <button id="saveBtn" class="alt">保存到本地</button>
-        <button id="loadBtn" class="alt">读取存档</button>
-        <button id="resetBtn" class="danger">清空存档</button>
-      </div>
-      <p class="small">网页版尽量对齐 CLI 版本核心玩法：修炼、战斗、NPC生态、队伍、任务、家族传承、背包和存档。</p>
+<div class="wrap">
+  <h1>修仙模拟人生（网页正式版）</h1>
+  <div class="panel">
+    <div class="row">
+      <label>道号：<input id="nameInput" value="无名散修" /></label>
+      <button id="newBtn">开始新人生</button>
+      <button id="saveBtn" class="alt">保存</button>
+      <button id="loadBtn" class="alt">读取</button>
+      <button id="resetBtn" class="danger">清空存档</button>
     </div>
-
-    <div class="grid">
-      <div class="card"><div id="status"></div></div>
-      <div class="card"><div id="lists"></div></div>
-    </div>
-
-    <div class="card">
-      <div class="row">
-        <button data-act="meditate">打坐修炼</button>
-        <button data-act="roam">外出历练</button>
-        <button data-act="social">结识NPC</button>
-        <button data-act="recruit">邀请入队</button>
-        <button data-act="quest">接取任务</button>
-        <button data-act="market">坊市交易</button>
-        <button data-act="item">使用丹药</button>
-        <button data-act="family">家族经营</button>
-        <button data-act="heir">传位给子嗣</button>
-        <button data-act="next">结束回合</button>
-      </div>
-    </div>
-
-    <div class="card"><div id="log"></div></div>
+    <div class="small">已补上地图、体力消耗、回合恢复、任务/NPC/家族/队伍等玩法。每个行动都需要体力。</div>
   </div>
 
+  <div class="top">
+    <div class="panel">
+      <h3>角色状态</h3>
+      <div id="status"></div>
+    </div>
+    <div class="panel">
+      <h3>世界地图</h3>
+      <div id="map" class="map"></div>
+      <div class="small" id="mapHint"></div>
+      <div class="row" style="margin-top:8px">
+        <button data-act="move">地图移动（-5体力）</button>
+        <button data-act="next" class="alt">结束回合（恢复）</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="mid">
+    <div class="panel">
+      <h3>行动面板</h3>
+      <div class="row">
+        <button data-act="meditate">打坐修炼（-8体力）</button>
+        <button data-act="roam">外出历练/战斗（-12体力）</button>
+        <button data-act="social">结识NPC（-6体力）</button>
+        <button data-act="recruit">邀请入队（-4体力）</button>
+        <button data-act="quest">接取任务（-4体力）</button>
+        <button data-act="market">坊市交易（-4体力）</button>
+        <button data-act="item">使用丹药</button>
+        <button data-act="family">家族经营（-6体力）</button>
+        <button data-act="heir">传位给子嗣</button>
+      </div>
+      <div id="lists" style="margin-top:10px"></div>
+    </div>
+    <div class="panel">
+      <h3>事件日志</h3>
+      <div id="log"></div>
+    </div>
+  </div>
+</div>
+
 <script>
-const LOCATIONS = ['青石镇','灵溪谷','白鹿书院','天火山','玄霜海','万剑城'];
-const FACTIONS = ['散修','青云宗','血煞盟','天机阁','丹霞谷','万剑门'];
-const STAGES = [[0,'凡人'],[120,'炼气'],[320,'筑基'],[650,'金丹'],[1100,'元婴'],[1800,'化神']];
-const NAMES = ['赵青月','钱玄风','孙竹澜','李云川','周霜瑶','吴宁墨','郑雪烈','王青玄'];
+const MAP = ['青石镇','灵溪谷','白鹿书院','天火山','玄霜海','万剑城','古战场','丹霞谷','黑风岭'];
+const LINKS = {
+  '青石镇':['灵溪谷','白鹿书院'], '灵溪谷':['青石镇','天火山','玄霜海'], '白鹿书院':['青石镇','万剑城'],
+  '天火山':['灵溪谷','古战场'], '玄霜海':['灵溪谷','丹霞谷'], '万剑城':['白鹿书院','黑风岭'],
+  '古战场':['天火山','丹霞谷'], '丹霞谷':['玄霜海','古战场','黑风岭'], '黑风岭':['万剑城','丹霞谷']
+};
+const FACTIONS=['散修','青云宗','血煞盟','天机阁','丹霞谷','万剑门'];
+const STAGES=[[0,'凡人'],[120,'炼气'],[320,'筑基'],[650,'金丹'],[1100,'元婴'],[1800,'化神']];
+const NAMES=['赵青月','钱玄风','孙竹澜','李云川','周霜瑶','吴宁墨','郑雪烈','王青玄'];
+let W=null;
 
-let W = null;
-const rand = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
-const pick = arr=>arr[rand(0,arr.length-1)];
-const stageOf = v=>STAGES.reduce((s,[need,name])=>v>=need?name:s,'凡人');
+const rand=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const pick=arr=>arr[rand(0,arr.length-1)];
+const stageOf=v=>STAGES.reduce((s,[n,name])=>v>=n?name:s,'凡人');
 
-function mkNPC(){
-  return {name:pick(NAMES)+rand(1,99), faction:pick(FACTIONS), location:pick(LOCATIONS), relation:rand(-20,30), cultivation:rand(0,900), mood:rand(30,90), alive:true};
-}
-
-function log(msg){
-  W.logs.push(msg);
-  const view = W.logs.slice(-120).join('\n');
-  document.getElementById('log').textContent = view;
-}
+function mkNPC(){return {name:pick(NAMES)+rand(1,99),faction:pick(FACTIONS),location:pick(MAP),relation:rand(-20,30),cultivation:rand(0,900),alive:true};}
+function attack(){return 12+Math.floor(W.player.cultivation/40)+W.player.weaponBonus+W.player.party.length*2}
+function defense(){return 6+Math.floor(W.player.cultivation/65)+W.player.armorBonus+W.player.party.length}
+function log(msg){W.logs.push(msg);document.getElementById('log').textContent=W.logs.slice(-160).join('\n')}
 
 function createWorld(name){
   return {
     turn:1,
     player:{
-      name:name||'无名散修', age:16, hp:120, maxHp:120, qi:80, maxQi:80,
-      cultivation:0, stones:30, reputation:0, karma:0, location:pick(LOCATIONS), faction:'散修',
-      title:'无名散修', inventory:{'回春丹':2,'聚气丹':1,'灵米':3}, party:[], social:{},
-      spouse:null, children:[], clanName:(name||'无名散修')+'家', clanPrestige:0,
-      weaponBonus:0, armorBonus:0, artifact:null, artifactCharge:0
+      name:name||'无名散修',age:16,hp:120,maxHp:120,qi:80,maxQi:80,stamina:40,maxStamina:40,
+      cultivation:0,stones:30,reputation:0,karma:0,location:'青石镇',faction:'散修',title:'无名散修',
+      inventory:{'回春丹':2,'聚气丹':2,'灵米':3},party:[],social:{},spouse:null,children:[],
+      clanName:(name||'无名散修')+'家',clanPrestige:0,weaponBonus:0,armorBonus:0,artifact:null,artifactCharge:0
     },
-    npcs:Array.from({length:20},()=>mkNPC()),
-    quests:[],
-    logs:['你踏入修仙界，一切从凡人开始。']
+    npcs:Array.from({length:24},()=>mkNPC()),
+    quests:[],logs:['你从青石镇出发，踏上修仙路。']
   };
 }
 
-function attack(){ return 12 + Math.floor(W.player.cultivation/40) + W.player.weaponBonus; }
-function defense(){ return 6 + Math.floor(W.player.cultivation/65) + W.player.armorBonus; }
+function spend(cost){ if(W.player.stamina<cost){ log(`体力不足（需要${cost}，当前${W.player.stamina}），请结束回合恢复。`); return false;} W.player.stamina-=cost; return true; }
 
 function render(){
-  if(!W){ document.getElementById('status').textContent='点击“开始新人生”'; return; }
+  if(!W){document.getElementById('status').textContent='点击“开始新人生”';return}
   const p=W.player;
-  const here=W.npcs.filter(n=>n.alive && n.location===p.location).slice(0,5);
-  document.getElementById('status').innerHTML = `
+  const hpPct=Math.round(p.hp/p.maxHp*100), qiPct=Math.round(p.qi/p.maxQi*100), staPct=Math.round(p.stamina/p.maxStamina*100);
+  const localNPC=W.npcs.filter(n=>n.alive&&n.location===p.location).slice(0,6);
+
+  document.getElementById('status').innerHTML=`
 <b>${p.name}</b>｜第 ${W.turn} 年｜地点：${p.location}<br>
-称号：${p.title}｜阵营：${p.faction}｜境界：${stageOf(p.cultivation)}（${p.cultivation}）<br>
-气血：${p.hp}/${p.maxHp}｜真气：${p.qi}/${p.maxQi}｜攻防：${attack()}/${defense()}<br>
-灵石：${p.stones}｜声望：${p.reputation}｜因果：${p.karma}<br>
-家族：${p.clanName}（家族声望 ${p.clanPrestige}）｜道侣：${p.spouse||'暂无'}｜子嗣：${p.children.length}<br>
-队伍：${p.party.length?p.party.join('、'):'无'}
-`;
-  document.getElementById('lists').innerHTML = `
+境界：${stageOf(p.cultivation)}（修为 ${p.cultivation}）｜称号：${p.title}<br>
+灵石：${p.stones}｜声望：${p.reputation}｜因果：${p.karma}｜阵营：${p.faction}<br>
+<div class='small'>气血 ${p.hp}/${p.maxHp}</div><div class='bar'><div class='fill hp' style='width:${hpPct}%'></div></div>
+<div class='small'>真气 ${p.qi}/${p.maxQi}</div><div class='bar'><div class='fill qi' style='width:${qiPct}%'></div></div>
+<div class='small'>体力 ${p.stamina}/${p.maxStamina}</div><div class='bar'><div class='fill sta' style='width:${staPct}%'></div></div>
+<div style='margin-top:6px'>家族：${p.clanName}(声望${p.clanPrestige})｜道侣：${p.spouse||'暂无'}｜子嗣：${p.children.length}<br>队伍：${p.party.length?p.party.join('、'):'无'}</div>`;
+
+  document.getElementById('lists').innerHTML=`
 <b>背包</b>：${Object.entries(p.inventory).filter(([,v])=>v>0).map(([k,v])=>`${k}x${v}`).join('、')||'无'}<br>
-<b>在场NPC</b>：${here.map(n=>`${n.name}(好感${n.relation},${stageOf(n.cultivation)})`).join('｜')||'无人'}<br>
-<b>任务</b>：${W.quests.length?W.quests.map(q=>`${q.title}(${q.progress}/${q.target})`).join('｜'):'暂无'}
-`;
-  document.getElementById('log').textContent = W.logs.slice(-120).join('\n');
+<b>当前地图NPC</b>：${localNPC.map(n=>`${n.name}(好感${n.relation},${stageOf(n.cultivation)})`).join('｜')||'无人'}<br>
+<b>任务</b>：${W.quests.length?W.quests.map(q=>`${q.title}[${q.progress}/${q.target}]`).join('｜'):'暂无'}<br>
+<b>可前往</b>：${LINKS[p.location].join('、')}`;
+
+  const map=document.getElementById('map');
+  map.innerHTML=MAP.map(loc=>`<div class='node ${loc===p.location?'current':''}'>${loc}${loc===p.location?'（你在此）':''}</div>`).join('');
+  document.getElementById('mapHint').textContent=`当前位置 ${p.location}，相邻地图：${LINKS[p.location].join('、')}`;
+  document.getElementById('log').textContent=W.logs.slice(-160).join('\n');
 }
 
 function tick(){
-  W.turn += 1;
   const p=W.player;
-  p.age += 1;
-  p.hp = Math.min(p.maxHp,p.hp+6);
-  p.qi = Math.min(p.maxQi,p.qi+10);
-  p.artifactCharge = Math.min(3,p.artifactCharge+1);
-  p.location = pick(LOCATIONS);
+  W.turn++; p.age++; p.stamina=Math.min(p.maxStamina,p.stamina+24); p.hp=Math.min(p.maxHp,p.hp+8); p.qi=Math.min(p.maxQi,p.qi+12);
+  p.artifactCharge=Math.min(3,p.artifactCharge+1);
+  if(p.age>80) p.hp=Math.max(1,p.hp-rand(4,10));
 
-  W.npcs.forEach(n=>{
-    if(!n.alive) return;
-    n.location = Math.random()<0.45?pick(LOCATIONS):n.location;
-    n.mood = Math.max(0,Math.min(100,n.mood+rand(-7,7)));
-    n.cultivation = Math.max(0,n.cultivation+rand(-10,20));
-    if(Math.random()<0.02){ n.alive=false; log(`${n.name}寿元已尽，陨落于${n.location}。`); }
-  });
-
-  W.quests.forEach(q=>{ if(!q.done && q.progress>=q.target){ q.done=true; p.stones+=q.rewardStones; p.reputation+=q.rewardRep; log(`任务完成：${q.title}，获得灵石${q.rewardStones}/声望${q.rewardRep}`);} });
-  if(p.age>80){ p.hp=Math.max(1,p.hp-rand(5,12)); }
-  if(p.cultivation>=1800) p.title='化神真君';
-  if(p.cultivation>=1100 && p.title==='无名散修') p.title='元婴老祖';
-  if(Math.random()<0.16){ p.karma += rand(-2,3); log('你被卷入一场因果风波。'); }
+  W.npcs.forEach(n=>{if(!n.alive)return; if(Math.random()<0.4)n.location=pick(MAP); n.cultivation=Math.max(0,n.cultivation+rand(-10,20)); if(Math.random()<0.015){n.alive=false;log(`${n.name}坐化于${n.location}。`)}});
+  W.quests.forEach(q=>{if(!q.done&&q.progress>=q.target){q.done=true;p.stones+=q.rewardStone;p.reputation+=q.rewardRep;log(`任务完成：${q.title}，奖励灵石${q.rewardStone}/声望${q.rewardRep}`)}});
+  if(p.cultivation>=1800)p.title='化神真君'; else if(p.cultivation>=1100)p.title='元婴老祖'; else if(p.cultivation>=650)p.title='金丹真人';
+  if(Math.random()<0.2){p.karma+=rand(-2,3);log('天机扰动，因果值发生变化。')}
+  log('新的一年开始，你恢复了部分气血/真气/体力。');
 }
 
-const acts = {
-  meditate(){ const p=W.player; const g=rand(25,50); p.cultivation+=g; p.qi=Math.max(0,p.qi-rand(10,20)); log(`你闭关修炼，修为+${g}。`); },
+const acts={
+  move(){ if(!spend(5))return; const p=W.player; p.location=pick(LINKS[p.location]); log(`你穿行山河，抵达${p.location}。`) },
+  meditate(){ if(!spend(8))return; const p=W.player; const g=rand(25,55); p.cultivation+=g; p.qi=Math.max(0,p.qi-rand(8,18)); log(`你打坐参悟，修为+${g}。`) },
   roam(){
-    const p=W.player;
-    const enemy = {name:pick(['噬魂狼','山魈','幽骨修士','血翼妖禽']), hp:rand(50,140), atk:rand(10,32), def:rand(2,14), rewardStone:rand(8,30), rewardCult:rand(20,70)};
-    let myDmg = Math.max(1,attack()-enemy.def+rand(-3,6));
-    let eDmg = Math.max(0,enemy.atk-defense()+rand(-2,5));
-    if(Math.random() < Math.min(0.4,0.08 + p.cultivation/4500)){ myDmg*=2; }
-    enemy.hp -= myDmg; p.hp -= eDmg;
-    if(enemy.hp<=0){ p.stones+=enemy.rewardStone; p.cultivation+=enemy.rewardCult; W.quests.forEach(q=>{if(!q.done&&q.type==='斩妖')q.progress+=1;}); log(`你击败${enemy.name}，获灵石${enemy.rewardStone}，修为+${enemy.rewardCult}。`); }
-    else { log(`你与${enemy.name}交战，造成${myDmg}伤害，自身受伤${eDmg}。`); }
-    if(p.hp<=0){ p.hp=1; p.stones=Math.max(0,p.stones-20); log('你重伤濒死，侥幸逃生，损失灵石20。'); }
+    if(!spend(12))return; const p=W.player;
+    const enemy={name:pick(['噬魂狼','山魈','幽骨修士','血翼妖禽','裂岩魔']),hp:rand(65,170),atk:rand(12,35),def:rand(3,16),stone:rand(10,40),cult:rand(25,80)};
+    let my=Math.max(1,attack()-enemy.def+rand(-3,7)); let en=Math.max(0,enemy.atk-defense()+rand(-2,6));
+    if(Math.random()<Math.min(0.42,0.08+p.cultivation/4500)){my*=2;log('你触发暴击！')}
+    enemy.hp-=my; p.hp-=en;
+    if(enemy.hp<=0){p.stones+=enemy.stone;p.cultivation+=enemy.cult;W.quests.forEach(q=>{if(!q.done&&q.type==='斩妖')q.progress++});log(`你击败${enemy.name}，获灵石${enemy.stone}，修为+${enemy.cult}。`)}
+    else log(`你与${enemy.name}交战：造成${my}伤害，受到${en}伤害。`);
+    if(p.hp<=0){p.hp=1;p.stones=Math.max(0,p.stones-20);log('你重伤遁走，损失灵石20。')}
   },
-  social(){
-    const p=W.player;
-    const npc = pick(W.npcs.filter(n=>n.alive));
-    const add=rand(5,16);
-    npc.relation += add;
-    p.social[npc.name]=(p.social[npc.name]||0)+add;
-    p.reputation += 1;
-    if(npc.relation>80 && !p.spouse && Math.random()<0.25){ p.spouse=npc.name; log(`你与${npc.name}结为道侣。`); }
-    if(p.spouse && Math.random()<0.18){ p.children.push({name:'子嗣'+(p.children.length+1),talent:rand(30,95),age:0}); log('家族添丁，你迎来一位子嗣。'); }
-    log(`你与${npc.name}交流，好感+${add}。`);
-  },
-  recruit(){
-    const p=W.player;
-    const cand = W.npcs.find(n=>n.alive && n.location===p.location && n.relation>=50 && !p.party.includes(n.name));
-    if(!cand){ log('本地暂无可招募同伴（需同地点且好感≥50）。'); return; }
-    p.party.push(cand.name); p.reputation += 2; log(`${cand.name}加入你的队伍。`);
-  },
-  quest(){
-    const p=W.player;
-    if(W.quests.some(q=>!q.done)){ log('你已有进行中的任务。'); return; }
-    const q={title:'清剿妖患',giver:pick(W.npcs).name,type:'斩妖',target:rand(2,4),progress:0,rewardStones:rand(20,60),rewardRep:rand(2,6),done:false};
-    W.quests.push(q); log(`接取任务：${q.title}（击败${q.target}名敌人）。`);
-  },
-  market(){
-    const p=W.player;
-    if(p.stones<10){ log('灵石不足。'); return; }
-    const roll=rand(1,5);
-    if(roll===1){ p.stones-=10; p.inventory['回春丹']=(p.inventory['回春丹']||0)+1; log('你购入回春丹x1。'); }
-    else if(roll===2){ p.stones-=16; p.inventory['聚气丹']=(p.inventory['聚气丹']||0)+1; log('你购入聚气丹x1。'); }
-    else if(roll===3){ p.stones-=28; p.weaponBonus+=2; log('你换上更好的法剑，攻击+2。'); }
-    else if(roll===4){ p.stones-=24; p.armorBonus+=2; log('你换上护甲，防御+2。'); }
-    else { p.stones-=35; p.artifact='玄火印'; p.artifactCharge=3; log('你获得法宝【玄火印】（充能3）。'); }
-  },
-  item(){
-    const p=W.player;
-    if((p.inventory['回春丹']||0)>0){ p.inventory['回春丹']-=1; p.hp=Math.min(p.maxHp,p.hp+35); log('服用回春丹，气血恢复35。'); return; }
-    if((p.inventory['聚气丹']||0)>0){ p.inventory['聚气丹']-=1; p.qi=Math.min(p.maxQi,p.qi+28); log('服用聚气丹，真气恢复28。'); return; }
-    log('你没有可用丹药。');
-  },
-  family(){
-    const p=W.player;
-    if(p.stones>=15){ p.stones-=15; p.clanPrestige+=rand(2,7); log('你投入资源经营家族，家族声望提升。'); }
-    else log('灵石不足，无法经营家族。');
-    p.children.forEach(c=>{ c.age += 1; if(Math.random()<0.3)c.talent=Math.min(100,c.talent+rand(1,4)); });
-  },
-  heir(){
-    const p=W.player;
-    if(!p.children.length){ log('你还没有子嗣，无法传位。'); return; }
-    const heir = p.children.sort((a,b)=>b.talent-a.talent)[0];
-    p.name = heir.name + '（继承者）';
-    p.age = 18;
-    p.cultivation = Math.floor(p.cultivation*0.55) + heir.talent;
-    p.hp = p.maxHp; p.qi = p.maxQi; p.reputation += 8; p.clanPrestige += 10;
-    log(`你将衣钵传给${heir.name}，家族气运延续。`);
-  },
-  next(){ tick(); log('岁月流转，新的一年开始。'); }
+  social(){ if(!spend(6))return; const p=W.player; const npc=pick(W.npcs.filter(n=>n.alive)); const add=rand(5,16); npc.relation+=add; p.social[npc.name]=(p.social[npc.name]||0)+add; p.reputation++; log(`你与${npc.name}论道，好感+${add}。`); if(npc.relation>=85&&!p.spouse&&Math.random()<0.25){p.spouse=npc.name;log(`你与${npc.name}结为道侣。`)} if(p.spouse&&Math.random()<0.16){p.children.push({name:'子嗣'+(p.children.length+1),talent:rand(35,96),age:0});log('家族诞生了新的子嗣。')} },
+  recruit(){ if(!spend(4))return; const p=W.player; const c=W.npcs.find(n=>n.alive&&n.location===p.location&&n.relation>=50&&!p.party.includes(n.name)); if(!c){log('本地没有满足好感条件的可招募同伴。');return} p.party.push(c.name); p.reputation+=2; log(`${c.name}加入你的队伍。`) },
+  quest(){ if(!spend(4))return; if(W.quests.some(q=>!q.done)){log('你已有未完成任务。');return} const q={title:'清剿妖患',type:'斩妖',target:rand(2,5),progress:0,rewardStone:rand(25,70),rewardRep:rand(2,7),done:false}; W.quests.push(q); log(`接取任务：${q.title}（需击败${q.target}名妖敌）。`) },
+  market(){ if(!spend(4))return; const p=W.player; if(p.stones<10){log('灵石不足，无法交易。');return} const r=rand(1,6); if(r===1){p.stones-=10;p.inventory['回春丹']=(p.inventory['回春丹']||0)+1;log('购入回春丹x1。')} else if(r===2){p.stones-=14;p.inventory['聚气丹']=(p.inventory['聚气丹']||0)+1;log('购入聚气丹x1。')} else if(r===3){p.stones-=26;p.weaponBonus+=2;log('更换法剑，攻击+2。')} else if(r===4){p.stones-=24;p.armorBonus+=2;log('更换护甲，防御+2。')} else if(r===5){p.stones-=18;p.maxStamina+=3;log('购入灵食，体力上限+3。')} else {p.stones-=35;p.artifact='玄火印';p.artifactCharge=3;log('获得法宝【玄火印】。')} },
+  item(){ const p=W.player; if((p.inventory['回春丹']||0)>0){p.inventory['回春丹']--;p.hp=Math.min(p.maxHp,p.hp+38);log('服用回春丹，气血恢复。');return} if((p.inventory['聚气丹']||0)>0){p.inventory['聚气丹']--;p.qi=Math.min(p.maxQi,p.qi+30);log('服用聚气丹，真气恢复。');return} if((p.inventory['灵米']||0)>0){p.inventory['灵米']--;p.stamina=Math.min(p.maxStamina,p.stamina+10);log('食用灵米，体力恢复10。');return} log('没有可用物品。') },
+  family(){ if(!spend(6))return; const p=W.player; if(p.stones>=15){p.stones-=15;p.clanPrestige+=rand(2,8);log('你投入资源经营家族，家族声望提升。')} else log('灵石不足，无法经营家族。'); p.children.forEach(c=>{c.age++; if(Math.random()<0.3)c.talent=Math.min(100,c.talent+rand(1,4));}) },
+  heir(){ const p=W.player; if(!p.children.length){log('你暂无子嗣，无法传位。');return} const h=[...p.children].sort((a,b)=>b.talent-a.talent)[0]; p.name=h.name+'（继承者）'; p.age=18; p.cultivation=Math.floor(p.cultivation*0.55)+h.talent; p.hp=p.maxHp; p.qi=p.maxQi; p.stamina=p.maxStamina; p.reputation+=8; p.clanPrestige+=10; log(`你将衣钵传给${h.name}，家族香火延续。`) },
+  next(){ tick(); }
 };
 
-function save(){ localStorage.setItem('xianxia_web_save', JSON.stringify(W)); log('已保存到浏览器本地存档。'); }
-function load(){ const raw=localStorage.getItem('xianxia_web_save'); if(!raw){ alert('没有找到存档'); return; } W=JSON.parse(raw); log('已读取本地存档。'); render(); }
+function save(){localStorage.setItem('xianxia_web_save',JSON.stringify(W));log('已保存到本地存档。')}
+function load(){const raw=localStorage.getItem('xianxia_web_save');if(!raw){alert('没有存档');return}W=JSON.parse(raw);log('已读取存档。')}
 
 function bind(){
-  document.getElementById('newBtn').onclick=()=>{W=createWorld(document.getElementById('nameInput').value.trim()); render();};
-  document.getElementById('saveBtn').onclick=()=>{ if(!W) return; save(); render(); };
-  document.getElementById('loadBtn').onclick=()=>load();
-  document.getElementById('resetBtn').onclick=()=>{ localStorage.removeItem('xianxia_web_save'); alert('存档已清空'); };
-  document.querySelectorAll('button[data-act]').forEach(b=>b.onclick=()=>{ if(!W){alert('请先开始新人生'); return;} acts[b.dataset.act](); render(); });
+  document.getElementById('newBtn').onclick=()=>{W=createWorld(document.getElementById('nameInput').value.trim());render()};
+  document.getElementById('saveBtn').onclick=()=>{if(!W)return;save();render()};
+  document.getElementById('loadBtn').onclick=()=>{load();render()};
+  document.getElementById('resetBtn').onclick=()=>{localStorage.removeItem('xianxia_web_save');alert('存档已清空')};
+  document.querySelectorAll('button[data-act]').forEach(btn=>btn.onclick=()=>{if(!W){alert('请先开始新人生');return}acts[btn.dataset.act]();render()});
 }
 
-bind();
-render();
+bind(); render();
 </script>
 </body>
 </html>
