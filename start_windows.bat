@@ -1,9 +1,7 @@
 @echo off
 setlocal
-cd /d %~dp0
 
 echo [INFO] Starting game launcher...
-echo [INFO] If game starts correctly, you will see prompt: 请输入道号
 set ERR=0
 
 if exist xianxia_game.exe (

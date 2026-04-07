@@ -35,9 +35,7 @@ def write_launchers() -> None:
     launcher_bat.write_text(
         "@echo off\r\n"
         "setlocal\r\n"
-        "cd /d %~dp0\r\n"
         "echo [INFO] Starting game launcher...\r\n"
-        "echo [INFO] If game starts correctly, you will see prompt: 请输入道号\r\n"
         "set ERR=0\r\n"
         "if exist xianxia_game.exe (\r\n"
         "  echo [INFO] EXE detected. Running without Python...\r\n"
