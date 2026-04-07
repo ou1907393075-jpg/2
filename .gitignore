@@ -1,4 +1,7 @@
 __pycache__/
 *.pyc
 dist/
+dist_windows/
+build/
+*.spec
 savegame.json

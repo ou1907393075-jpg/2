@@ -21,6 +21,21 @@ python3 build_package.py
 
 > 需要本机已安装 Python 3。
 
+## Windows 无需 Python 的可执行版（推荐给普通玩家）
+
+如果你希望在 Windows 上“下载即玩”（不装 Python），请在 Windows 机器上先执行一次：
+
+```bash
+pip install pyinstaller
+python build_windows_exe.py
+```
+
+完成后会生成：
+
+- `dist_windows/xianxia-game-windows-exe.zip`
+
+解压后双击 `xianxia_game.exe` 即可运行。
+
 ## 开发运行
 
 ```bash

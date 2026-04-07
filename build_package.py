@@ -35,6 +35,12 @@ def write_launchers() -> None:
     launcher_bat.write_text(
         "@echo off\r\n"
         "chcp 65001 >nul\r\n"
+        "where python >nul 2>nul\r\n"
+        "if errorlevel 1 (\r\n"
+        "  echo [错误] 未检测到 Python，请先安装 Python 3，或使用 Windows EXE 打包版。\r\n"
+        "  pause\r\n"
+        "  exit /b 1\r\n"
+        ")\r\n"
         "python game.py\r\n"
         "pause\r\n",
         encoding="utf-8",
