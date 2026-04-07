@@ -26,14 +26,6 @@ def run(cmd: list[str]) -> None:
     subprocess.run(cmd, check=True)
 
 
-def ensure_pyinstaller() -> None:
-    try:
-        run(["pyinstaller", "--version"])
-    except Exception:
-        print("PyInstaller not found, installing...")
-        run(["python", "-m", "pip", "install", "pyinstaller"])
-
-
 def clean() -> None:
     if BUILD_DIR.exists():
         shutil.rmtree(BUILD_DIR)
@@ -66,7 +58,6 @@ def package() -> None:
 
 def main() -> None:
     clean()
-    ensure_pyinstaller()
     build_exe()
     package()
     print(f"Windows EXE package created: {ZIP_PATH}")

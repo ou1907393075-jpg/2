@@ -4,11 +4,6 @@
 
 ## 先说最简单：怎么安装 / 运行
 
-可以做到你说的“**直接下载-解压-开玩**”，但前提是你拿到的是 **EXE 打包版**，不是源码仓库。
-
-- 给玩家：发 `dist_windows/xianxia-game-windows-exe.zip`，玩家解压后双击 `xianxia_game.exe` 即可。  
-- 给开发者：源码仓库默认是代码形态，需要先运行脚本生成上面的 EXE 包。
-
 你下载下来的如果是源码仓库，可以按下面 2 条路线走：
 
 ### 路线 A：直接运行源码（最快）
@@ -62,10 +57,6 @@ python3 build_package.py
 pip install pyinstaller
 python build_windows_exe.py
 ```
-
-或者 Windows 下直接双击一键脚本：
-
-- `make_release_windows.bat`
 
 ---
 
