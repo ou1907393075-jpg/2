@@ -44,6 +44,12 @@
     .scene-box{margin-top:10px;padding:10px 12px;border-radius:12px;background:linear-gradient(160deg,#201d16,#17140f);border:1px solid #9f845555;box-shadow:inset 0 1px 0 #fff1}
     .scene-title{font-size:14px;color:#f0d9ad;margin-bottom:4px}
     .scene-text{font-size:13px;color:#dac7a5;line-height:1.8}
+    .pager{display:flex;gap:8px;align-items:center;margin:0 0 10px}
+    .pager .now{font-size:13px;color:#e9d8b3;padding:6px 10px;border:1px solid #8d754b66;border-radius:10px;background:#17130e}
+    #feedbackDock{position:fixed;right:16px;bottom:14px;width:min(420px,92vw);z-index:20;background:#11160fee;border:1px solid #8a724f7a;border-radius:12px;box-shadow:0 12px 24px #0008;padding:10px}
+    #feedbackDock h4{margin:0 0 6px;font-size:13px;color:#f1ddb6}
+    #feedbackLatest{font-size:12px;color:#e9d9bc;line-height:1.6;max-height:120px;overflow:auto}
+    #feedbackStats{font-size:12px;color:#cdbb9a;border-top:1px dashed #755f3d77;margin-top:6px;padding-top:6px}
     .view-panel{display:none}
     .view-panel.active{display:block}
   </style>
@@ -67,6 +73,11 @@
     <button data-view-target="systemPanel">📜 系统总览</button>
     <button data-view-target="battlePanel" id="battleTab">🔥 战斗</button>
     <button data-view-target="logPanel">📖 日志</button>
+  </div>
+  <div class="pager">
+    <button id="prevPanelBtn" class="alt">← 上一页</button>
+    <div id="panelNow" class="now">当前页：开局</div>
+    <button id="nextPanelBtn" class="alt">下一页 →</button>
   </div>
 
   <div class="panel view-panel active" id="startPanel">
@@ -231,6 +242,11 @@
 
   <div class="panel view-panel" id="logPanel"><h3>日志</h3><div id="log"></div></div>
 </div>
+<div id="feedbackDock">
+  <h4>实时反馈（无需切到日志）</h4>
+  <div id="feedbackLatest">暂无反馈。</div>
+  <div id="feedbackStats">状态摘要将在开始后显示。</div>
+</div>
 
 <script>
 const MAP=['青石镇','灵溪谷','白鹿书院','天火山','玄霜海','万剑城','古战场','丹霞谷','黑风岭'];
@@ -315,10 +331,16 @@ const pick=a=>a[rand(0,a.length-1)];
 const stage=v=>STAGES.reduce((s,[n,t])=>v>=n?t:s,'凡人');
 const p=()=>W.player;
 let activePanel='startPanel';
+let panelOrder=[];
+function refreshPanelNow(){
+  const btn=document.querySelector(`#tabbar button[data-view-target='${activePanel}']`);
+  document.getElementById('panelNow').textContent=`当前页：${btn?btn.textContent.replace(/^[^\\u4e00-\\u9fa5A-Za-z0-9]+/,'').trim():'未知'}`;
+}
 function switchPanel(id){
   activePanel=id;
   document.querySelectorAll('.view-panel').forEach(el=>el.classList.toggle('active', el.id===id));
   document.querySelectorAll('#tabbar button[data-view-target]').forEach(btn=>btn.classList.toggle('active', btn.dataset.viewTarget===id));
+  refreshPanelNow();
 }
 
 function buildTraitPool(){
@@ -367,7 +389,12 @@ function enemy(){ return {name:pick(['噬魂狼','山魈','幽骨修士','血翼
 function atk(){ const fatiguePenalty=Math.floor((p().fatigue||0)/18); const heartBonus=(p().daoHeart||0)>=20?2:(p().daoHeart||0)<=-20?-2:0; return Math.max(1,12+Math.floor(p().cultivation/40)+p().weapon+p().party.length*2+mainTechBonus()*2-fatiguePenalty+heartBonus); }
 function def(){ const fatiguePenalty=Math.floor((p().fatigue||0)/22); const heartBonus=(p().daoHeart||0)>=25?1:(p().daoHeart||0)<=-25?-1:0; return Math.max(0,6+Math.floor(p().cultivation/65)+p().armor+p().party.length-fatiguePenalty+heartBonus); }
 
-function log(t){W.logs.push(t);document.getElementById('log').textContent=W.logs.slice(-220).join('\n');}
+function log(t){
+  W.logs.push(t);
+  document.getElementById('log').textContent=W.logs.slice(-220).join('\n');
+  const latest=W.logs.slice(-5).map(x=>`• ${x}`).join('<br>');
+  document.getElementById('feedbackLatest').innerHTML=latest||'暂无反馈。';
+}
 function spend(cost){
   if(p().stamina<cost){log(`时日不足：需要${cost}日，当前仅余${p().stamina}日可用。`); return false;}
   p().stamina-=cost;
@@ -476,7 +503,7 @@ function initCreationOptions(){
 }
 
 function render(){
-  if(!W){document.getElementById('status').textContent='点击“新人生”开始'; return}
+  if(!W){document.getElementById('status').textContent='点击“新人生”开始'; document.getElementById('feedbackStats').textContent='状态摘要将在开始后显示。'; return}
   const hp=Math.round(p().hp/p().maxHp*100), qi=Math.round(p().qi/p().maxQi*100), st=Math.round(p().stamina/p().maxStamina*100);
   document.getElementById('status').innerHTML=`
 <div style="font-size:22px;font-weight:700;margin-bottom:4px">${p().name}</div>
@@ -537,6 +564,7 @@ function render(){
     document.getElementById('battleStatus').innerHTML=`敌人：${b.name}｜HP ${Math.max(0,b.hp)}<br>你：HP ${p().hp}/${p().maxHp}｜Qi ${p().qi}/${p().maxQi}`;
   }
   document.getElementById('log').textContent=W.logs.slice(-220).join('\n');
+  document.getElementById('feedbackStats').innerHTML=`${p().name}｜${stage(p().cultivation)}｜时日${p().stamina}/${p().maxStamina}｜疲劳${p().fatigue||0}｜道心${p().daoHeart||0}｜感悟${p().insight||0}`;
   syncSelectors();
 }
 
@@ -726,7 +754,10 @@ function save(){localStorage.setItem('xianxia_web_save',JSON.stringify(W));log('
 function load(){const raw=localStorage.getItem('xianxia_web_save');if(!raw){alert('没有存档');return;}W=JSON.parse(raw);if(!W.player.mainTechnique && Array.isArray(W.player.knownTechniques))W.player.mainTechnique=W.player.knownTechniques[0]||null;W.player.destiny=W.player.destiny||'凡尘问道';W.player.ambition=W.player.ambition||'长生久视';if(typeof W.player.fatigue!=='number')W.player.fatigue=10;if(typeof W.player.insight!=='number')W.player.insight=8;if(typeof W.player.daoHeart!=='number')W.player.daoHeart=5;log('读取存档成功。');switchPanel('statusPanel');}
 
 function bind(){
+  panelOrder=[...document.querySelectorAll('#tabbar button[data-view-target]')].map(b=>b.dataset.viewTarget);
   document.querySelectorAll('#tabbar button[data-view-target]').forEach(btn=>btn.onclick=()=>switchPanel(btn.dataset.viewTarget));
+  document.getElementById('prevPanelBtn').onclick=()=>{ const i=panelOrder.indexOf(activePanel); const n=(i-1+panelOrder.length)%panelOrder.length; switchPanel(panelOrder[n]); };
+  document.getElementById('nextPanelBtn').onclick=()=>{ const i=panelOrder.indexOf(activePanel); const n=(i+1)%panelOrder.length; switchPanel(panelOrder[n]); };
   document.getElementById('newBtn').onclick=()=>{W=newWorld(document.getElementById('nameInput').value.trim(), document.getElementById('genderInput').value, document.getElementById('bgInput').value, document.getElementById('destinyInput').value, document.getElementById('originTraitInput').value, document.getElementById('ambitionInput').value);W.questBoard=[genQuest(),genQuest(),genQuest()];W.player.traitKnowledge=[...W.player.permanentTraits.slice(0,3)];W.player.mainTechnique=W.player.knownTechniques[0]||null;if(W.player.background!==document.getElementById('bgInput').value){log('你所选背景条件不足，已自动降格为可用背景。');}log(`你选择了天命【${W.player.destiny}】、志向【${W.player.ambition}】与开局特质【${document.getElementById('originTraitInput').value}】。`); switchPanel('statusPanel'); render();};
   document.getElementById('saveBtn').onclick=()=>{if(!W)return;save();render();};
   document.getElementById('loadBtn').onclick=()=>{load();render();};
@@ -736,7 +767,7 @@ function bind(){
   document.querySelectorAll('button[data-battle]').forEach(b=>b.onclick=()=>{if(!W||!W.battle)return; battleAction(b.dataset.battle); render();});
 }
 
-initCreationOptions(); bind(); render();
+initCreationOptions(); bind(); refreshPanelNow(); render();
 </script>
 </body>
 </html>
