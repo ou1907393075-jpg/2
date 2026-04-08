@@ -48,6 +48,14 @@
     #feedbackDock h4{margin:0 0 6px;font-size:13px;color:#f1ddb6}
     #feedbackLatest{font-size:12px;color:#e9d9bc;line-height:1.6;max-height:120px;overflow:auto}
     #feedbackStats{font-size:12px;color:#cdbb9a;border-top:1px dashed #755f3d77;margin-top:6px;padding-top:6px}
+    .trait-badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+    .trait-pill{padding:3px 8px;border-radius:999px;font-size:12px;border:1px solid #ffffff22}
+    .q-red{background:#7f1d1d;color:#fecaca;border-color:#ef444466}
+    .q-gold{background:#5b4416;color:#fde68a;border-color:#f59e0b66}
+    .q-blue{background:#1e3a8a;color:#bfdbfe;border-color:#3b82f666}
+    .q-green{background:#14532d;color:#bbf7d0;border-color:#22c55e66}
+    .q-white{background:#374151;color:#f9fafb;border-color:#9ca3af66}
+    .q-gray{background:#1f2937;color:#d1d5db;border-color:#6b728066}
     .view-panel{display:none}
     .view-panel.active{display:block}
   </style>
@@ -304,6 +312,35 @@ const DIALOGUE_TEMPLATES=[
   '你们在风雪中争辩{topic}，最终各有所得。'
 ];
 const TOPICS=['剑意','丹道','阵理','因果','心魔','天劫','家族传承','宗门规矩','人间烟火'];
+const TRAIT_QUALITY_ORDER=['red','gold','blue','green','white','gray'];
+const TRAIT_QUALITY_LABEL={red:'红',gold:'金',blue:'蓝',green:'绿',white:'白',gray:'灰'};
+const UNIVERSAL_START_TRAITS=[
+  {name:'先天道胎',q:'red',effect:{talent:4,luck:2}},
+  {name:'悟道奇才',q:'gold',effect:{talent:3}},
+  {name:'福缘深厚',q:'gold',effect:{luck:3}},
+  {name:'心如止水',q:'blue',effect:{talent:1,daoHeart:3}},
+  {name:'玲珑心窍',q:'blue',effect:{talent:2}},
+  {name:'勤勉坚韧',q:'green',effect:{talent:1}},
+  {name:'家学渊源',q:'green',effect:{stones:12}},
+  {name:'凡骨平平',q:'white',effect:{}},
+  {name:'命途多舛',q:'gray',effect:{luck:-2,talent:-1}},
+  {name:'气血亏虚',q:'gray',effect:{talent:-1,hp:-12}}
+];
+const FEMALE_START_TRAITS=[
+  {name:'倾国倾城',q:'gold',effect:{beauty:16,social:2}},
+  {name:'绝代风华',q:'red',effect:{beauty:22,social:3,luck:1}},
+  {name:'兰心蕙质',q:'blue',effect:{talent:1,social:1}},
+  {name:'柔中带刚',q:'green',effect:{daoHeart:2}},
+  {name:'红颜薄命',q:'gray',effect:{luck:-1}}
+];
+const MALE_START_TRAITS=[
+  {name:'面如冠玉',q:'gold',effect:{beauty:14,social:2}},
+  {name:'天人之姿',q:'red',effect:{beauty:20,social:3,luck:1}},
+  {name:'沉稳如山',q:'blue',effect:{daoHeart:2,def:1}},
+  {name:'豪侠义胆',q:'green',effect:{social:1,daoHeart:1}},
+  {name:'锋芒太露',q:'gray',effect:{luck:-1,karma:1}}
+];
+const TRAIT_META=new Map();
 const LOC_LORE={
   '青石镇':'炊烟绕梁，凡人与散修共居，适合补给与打听消息。',
   '灵溪谷':'溪雾缭绕，灵草丰饶，常有低阶灵兽出没。',
@@ -347,6 +384,25 @@ function sampleTraits(cnt){
 function buildPool(prefixes, suffixes){
   const out=[]; for(const a of prefixes){ for(const b of suffixes){ out.push(`${a}${b}`); } } return out;
 }
+function registerTraitMeta(list){ list.forEach(t=>TRAIT_META.set(t.name,t)); }
+registerTraitMeta(UNIVERSAL_START_TRAITS);
+registerTraitMeta(FEMALE_START_TRAITS);
+registerTraitMeta(MALE_START_TRAITS);
+function qualityClass(q){ return `q-${q||'white'}`; }
+function getTraitMeta(name){
+  if(TRAIT_META.has(name)) return TRAIT_META.get(name);
+  const idx=Math.abs(name.split('').reduce((a,c)=>a+c.charCodeAt(0),0))%TRAIT_QUALITY_ORDER.length;
+  return {name,q:TRAIT_QUALITY_ORDER[idx],effect:{}};
+}
+function traitEffectSum(key, traits){
+  return (traits||[]).reduce((n,t)=>n+((getTraitMeta(t).effect||{})[key]||0),0);
+}
+function visibleTraitList(){
+  return [...p().permanentTraits,...p().tempTraits.map(t=>t.name),...p().evolvingTraits];
+}
+function effectiveTalent(){ return Math.max(1,p().talent+traitEffectSum('talent',visibleTraitList())); }
+function effectiveLuck(){ return Math.max(1,p().luck+traitEffectSum('luck',visibleTraitList())); }
+function talentRank(v){ return v>=15?'天纵奇才':v>=12?'旷世之才':v>=9?'上上之资':v>=7?'上佳资质':v>=5?'中人之资':v>=3?'平常资质':'根骨驽钝'; }
 const ITEM_POOL = buildPool(ITEM_PREFIX, ITEM_SUFFIX); // 20*16 = 320
 const TECH_POOL = buildPool(TECH_PREFIX, TECH_SUFFIX); // 16*12 = 192
 const BUILDING_POOL = buildPool(BUILDING_PREFIX, BUILDING_SUFFIX); // 20*16 = 320
@@ -450,14 +506,24 @@ function newWorld(name, gender, background, destinyName, originTrait, ambitionNa
   if(background==='天骄嫡传' && baseTalent<7){ finalBg='世家旁支'; }
   const actualBg = BACKGROUNDS[finalBg];
   const fixedTrait=originTrait||pick(ORIGIN_TRAITS);
-  const mergedPermanent=[fixedTrait,...(destiny.traits||[]),...sampleTraits(8)];
+  const genderPool=(gender||'男')==='女'?FEMALE_START_TRAITS:MALE_START_TRAITS;
+  const genderTrait=pick(genderPool).name;
+  const pickedUniversal=[pick(UNIVERSAL_START_TRAITS).name,pick(UNIVERSAL_START_TRAITS).name];
+  const mergedPermanent=[fixedTrait,genderTrait,...pickedUniversal,...(destiny.traits||[]),...sampleTraits(8)];
   const uniquePermanent=[...new Set(mergedPermanent)].slice(0,10);
+  const traitTalent=traitEffectSum('talent',uniquePermanent);
+  const traitLuck=traitEffectSum('luck',uniquePermanent);
+  const traitStone=traitEffectSum('stones',uniquePermanent);
+  const traitHp=traitEffectSum('hp',uniquePermanent);
+  const traitKarma=traitEffectSum('karma',uniquePermanent);
+  const traitHeart=traitEffectSum('daoHeart',uniquePermanent);
+  const traitBeauty=traitEffectSum('beauty',uniquePermanent);
   const startStones=actualBg.stones+(destiny.stones||0)+(ambition.stones||0);
   return {
     turn:1,
-    player:{name:name||'无名散修',age:16,location:'青石镇',hp:120,maxHp:120,qi:80,maxQi:80,stamina:42,maxStamina:42,fatigue:10,insight:8,daoHeart:5,cultivation:ambition.cult||0,stones:startStones,reputation:ambition.rep||0,karma:ambition.karma||0,title:'无名散修',
+    player:{name:name||'无名散修',age:16,location:'青石镇',hp:120+traitHp,maxHp:120+traitHp,qi:80,maxQi:80,stamina:42,maxStamina:42,fatigue:10,insight:8,daoHeart:5+traitHeart,cultivation:ambition.cult||0,stones:startStones+traitStone,reputation:ambition.rep||0,karma:(ambition.karma||0)+traitKarma,title:'无名散修',
       faction:'散修',weapon:0,armor:0,artifact:null,artifactCharge:0,inventory:{'回春丹':2,'聚气丹':2,'灵米':3,'阴阳生息丹':0,'功法残卷':0,'破境丹':0},party:[],social:{},spouse:null,spouseGender:null,children:[],clanPrestige:ambition.clan||0,clanName:(name||'无名散修')+'家',
-      gender:gender||'男',background:finalBg,destiny:destinyName||'凡尘问道',ambition:ambitionName||'长生久视',spiritRoot:root,physique:pick(PHYSIQUES),luck:Math.min(10,rand(1,10)+actualBg.luck+(destiny.luck||0)+(ambition.luck||0)),beauty:rand(35,96),talent:baseTalent,cultivationExp:0,
+      gender:gender||'男',background:finalBg,destiny:destinyName||'凡尘问道',ambition:ambitionName||'长生久视',spiritRoot:root,physique:pick(PHYSIQUES),luck:Math.min(10,rand(1,10)+actualBg.luck+(destiny.luck||0)+(ambition.luck||0)+traitLuck),beauty:Math.min(100,rand(35,96)+traitBeauty),talent:Math.max(1,baseTalent+traitTalent),cultivationExp:0,
       permanentTraits:uniquePermanent,tempTraits:sampleTraits(5).map(t=>({name:t,duration:rand(2,6)})),evolvingTraits:sampleTraits(4),traitKnowledge:[],
       knownTechniques:Array.from({length:1+actualBg.tech},()=>pick(TECH_POOL)),mainTechnique:null,artifactBag:[pick(ITEM_POOL)],sameSexConceiveReady:false,realmLock:false,dead:false,sectContribution:0,sectRank:SECT_RANKS[0],
       landOwned:0,buildings:[],materials:{木材:20,灵石矿:5,玄铁:2,灵木:1},rareItems:[],
@@ -525,7 +591,7 @@ function render(){
   <div class='card'>灵石：${p().stones}<br>声望：${p().reputation}<br>因果：${p().karma}</div>
   <div class='card'>性别：${p().gender}<br>背景：${p().background}<br>时令：${currentSeason()}季</div>
   <div class='card'>天命：${p().destiny||'凡尘问道'}<br>志向：${p().ambition||'长生久视'}<br>当前主城：${p().location}</div>
-  <div class='card'>灵根：${p().spiritRoot}<br>体质：${p().physique}<br>气运/天赋：${p().luck}/${p().talent}</div>
+  <div class='card'>灵根：${p().spiritRoot}<br>体质：${p().physique}<br>气运：${effectiveLuck()}（受特性影响）<br>天赋评级：${talentRank(effectiveTalent())}</div>
 </div>
 <div style="margin-top:8px" class='small'>岁月流逝缓慢但不可逆。</div>
 <div class='small'>气血 ${p().hp}/${p().maxHp}</div><div class='bar'><div class='fill hp' style='width:${hp}%'></div></div>
@@ -535,6 +601,8 @@ function render(){
 <div class='small'>攻击/防御: ${atk()}/${def()}｜队伍: ${p().party.length?p().party.join('、'):'无'}｜道侣: ${p().spouse||'暂无'}｜子嗣: ${p().children.length}</div>
 <div class='small'>已修功法：${p().knownTechniques.length}门（上限境界：${STAGES[maxRealmByTechs()][1]}）｜主修：${p().mainTechnique||'未指定'}（加成+${mainTechBonus()*2}攻）｜功法相性：${techniqueHarmony()}｜破境状态：${p().realmLock?'需冲击突破':'正常'}｜人质：${W.hostage||'无'}</div>
 <div class='small'>技能冷却：裂空斩${p().skillCd.skill1}回合｜护体诀${p().skillCd.skill2}回合</div>`;
+  const shownTraits=[...new Set(p().permanentTraits)].slice(0,10);
+  document.getElementById('status').innerHTML += `<div class='trait-badges'>${shownTraits.map(t=>`<span class='trait-pill ${qualityClass(getTraitMeta(t).q)}'>${TRAIT_QUALITY_LABEL[getTraitMeta(t).q]||''}·${t}</span>`).join('')}</div>`;
 
   document.getElementById('map').innerHTML=MAP.map(m=>`<div class='node ${m===p().location?'me':''}'>${m}${m===p().location?'（当前位置）':''}</div>`).join('');
   document.getElementById('moveHint').textContent=`相邻可达：${LINKS[p().location].join('、')}`;
@@ -723,7 +791,7 @@ const ACT_PANEL_MAP={
 
 const acts={
   move(){ if(!spend(5))return; p().location=document.getElementById('destSelect').value||p().location; questProgress('游历'); log(`你抵达 ${p().location}。`); },
-  cultivate(){ if(!spend(8))return; const costStone=6, costQi=14; if(p().stones<costStone||p().qi<costQi){log('修炼需要更多资源：灵石≥6且真气≥14。');return;} p().stones-=costStone; p().qi-=costQi; const fatigueDebuff=Math.floor((p().fatigue||0)/25); const gainExp=rand(8,16)+p().talent+seasonalCultBonus()+techniqueHarmony()+mainTechBonus()-fatigueDebuff; p().cultivationExp+=Math.max(2,gainExp); let gain=0; while(p().cultivationExp>=expNeed() && !p().realmLock){ p().cultivationExp-=expNeed(); const step=rand(6,14)+mainTechBonus()-fatigueDebuff; gain+=Math.max(2,step); p().cultivation+=Math.max(2,step); } p().insight=(p().insight||0)+rand(1,3); discoverUnknownTrait('闭关修炼',0.22); log(`你苦修一季（${currentSeason()}季），经验+${Math.max(2,gainExp)}${gain?`，修为+${gain}`:''}。`); },
+  cultivate(){ if(!spend(8))return; const costStone=6, costQi=14; if(p().stones<costStone||p().qi<costQi){log('修炼需要更多资源：灵石≥6且真气≥14。');return;} p().stones-=costStone; p().qi-=costQi; const fatigueDebuff=Math.floor((p().fatigue||0)/25); const gainExp=rand(8,16)+effectiveTalent()+seasonalCultBonus()+techniqueHarmony()+mainTechBonus()-fatigueDebuff; p().cultivationExp+=Math.max(2,gainExp); let gain=0; while(p().cultivationExp>=expNeed() && !p().realmLock){ p().cultivationExp-=expNeed(); const step=rand(6,14)+mainTechBonus()-fatigueDebuff; gain+=Math.max(2,step); p().cultivation+=Math.max(2,step); } p().insight=(p().insight||0)+rand(1,3); discoverUnknownTrait('闭关修炼',0.22); log(`你苦修一季（${currentSeason()}季），经验+${Math.max(2,gainExp)}${gain?`，修为+${gain}`:''}。`); },
   explore(){ if(!spend(10))return; if(Math.random()<0.75) startBattle(enemy()); else {const seasonStone=currentSeason()==='秋'?6:0; p().stones+=rand(6,20)+seasonStone; if(!p().realmLock)p().cultivation+=rand(10,26)+mainTechBonus(); const frag=rand(0,1); p().inventory['功法残卷']+=frag; p().materials.木材+=rand(1,3); if(Math.random()<0.2)p().materials.灵石矿+=1; p().insight=(p().insight||0)+rand(0,2); discoverUnknownTrait('外出历练',0.35); log(`历练平安归来，获得资源${seasonStone?'（秋收加成）':''}${frag?'并发现功法残卷x1':''}。`);}},
   fate_event(){ if(!spend(6))return; const events=[
     {name:'古碑残文',opts:['静心参悟','拓印出售','强行破禁']},
@@ -741,14 +809,14 @@ const acts={
   craft(){ if(!spend(6))return; if(p().stones<18){log('灵石不足，无法炼器。');return;} p().stones-=18; const r=rand(1,3); if(r===1){p().weapon+=1;log('炼器成功：武器强化+1');} else if(r===2){p().armor+=1;log('炼甲成功：护甲强化+1');} else {p().inventory['回春丹']=(p().inventory['回春丹']||0)+2;log('炼丹有成：回春丹+2');} },
   study(){ if(!spend(7))return; if((p().inventory['功法残卷']||0)<3){log('参悟失败：至少需要功法残卷x3。');return;} p().inventory['功法残卷']-=3; const t=pick(TECH_POOL); p().insight=(p().insight||0)+rand(3,6); if(!p().knownTechniques.includes(t)){ p().knownTechniques.push(t); log(`你通过残卷参悟出新功法【${t}】。`);} else { log(`你重复参悟了【${t}】，心得转化为少量修为。`); p().cultivation+=5; } },
   set_main_tech(){ const t=document.getElementById('techSelect').value; if(!t){log('暂无可设置主修功法。');return;} if(!p().knownTechniques.includes(t)){log('该功法尚未掌握。');return;} p().mainTechnique=t; log(`你已将【${t}】设为主修功法。`); },
-  breakthrough(){ if(!spend(9))return; if(!p().realmLock){log('当前未到瓶颈，无需冲击。');return;} if(p().stones<18){log('冲击境界至少需要灵石18作为资源准备。');return;} p().stones-=18; const insightSpend=Math.min(20,p().insight||0); p().insight=(p().insight||0)-insightSpend; let rate=0.22 + (p().luck/38) + (p().talent/40) + (insightSpend/120) + ((p().daoHeart||0)/220) + ((p().inventory['破境丹']||0)>0?0.18:0); if((p().inventory['破境丹']||0)>0) p().inventory['破境丹']--; if(Math.random()<rate){ p().realmLock=false; p().cultivation+=rand(10,24); p().daoHeart=Math.min(50,(p().daoHeart||0)+4); log(`冲击成功！你打破瓶颈，境界更进一步。${insightSpend?`（消耗感悟${insightSpend}）`:''}`); } else { p().hp=Math.max(1,p().hp-rand(14,28)); p().daoHeart=Math.max(-50,(p().daoHeart||0)-4); log(`冲击失败，受反噬，需更多岁月与资源。${insightSpend?`（已消耗感悟${insightSpend}）`:''}`); } },
+  breakthrough(){ if(!spend(9))return; if(!p().realmLock){log('当前未到瓶颈，无需冲击。');return;} if(p().stones<18){log('冲击境界至少需要灵石18作为资源准备。');return;} p().stones-=18; const insightSpend=Math.min(20,p().insight||0); p().insight=(p().insight||0)-insightSpend; let rate=0.22 + (effectiveLuck()/38) + (effectiveTalent()/40) + (insightSpend/120) + ((p().daoHeart||0)/220) + ((p().inventory['破境丹']||0)>0?0.18:0); if((p().inventory['破境丹']||0)>0) p().inventory['破境丹']--; if(Math.random()<rate){ p().realmLock=false; p().cultivation+=rand(10,24); p().daoHeart=Math.min(50,(p().daoHeart||0)+4); log(`冲击成功！你打破瓶颈，境界更进一步。${insightSpend?`（消耗感悟${insightSpend}）`:''}`); } else { p().hp=Math.max(1,p().hp-rand(14,28)); p().daoHeart=Math.max(-50,(p().daoHeart||0)-4); log(`冲击失败，受反噬，需更多岁月与资源。${insightSpend?`（已消耗感悟${insightSpend}）`:''}`); } },
   treasure(){ if(!spend(8))return; const item=pick(ITEM_POOL); p().artifactBag.push(item); const roll=Math.random(); if(roll<0.12){ p().inventory['阴阳生息丹']=(p().inventory['阴阳生息丹']||0)+1; log(`你寻得法宝【${item}】并额外获得【阴阳生息丹】。`);} else if(roll<0.24){ p().inventory['破境丹']=(p().inventory['破境丹']||0)+1; log(`你寻得法宝【${item}】并获得【破境丹】。`);} else if(roll<0.5){ p().inventory['功法残卷']=(p().inventory['功法残卷']||0)+rand(1,2); log(`你寻得法宝【${item}】并获得功法残卷。`);} else { log(`你寻得法宝【${item}】。`);} },
   shop(){ if(!spend(4))return; if(p().stones<10){log('灵石不足，无法交易');return;} const r=rand(1,7); if(r===1){p().stones-=10;p().inventory['回春丹']=(p().inventory['回春丹']||0)+1;log('购入回春丹x1')} else if(r===2){p().stones-=14;p().inventory['聚气丹']=(p().inventory['聚气丹']||0)+1;log('购入聚气丹x1')} else if(r===3){p().stones-=26;p().weapon+=2;log('更换法剑，攻击+2')} else if(r===4){p().stones-=24;p().armor+=2;log('更换护甲，防御+2')} else if(r===5){p().stones-=18;p().maxStamina+=4;log('购入灵食，体力上限+4')} else if(r===6){p().stones-=34;p().artifact='玄火印';p().artifactCharge=3;log('获得法宝【玄火印】')} else {p().stones-=30;p().reputation+=3;log('捐献宗门，声望+3')} },
   use_item(){ if((p().inventory['回春丹']||0)>0){p().inventory['回春丹']--;p().hp=Math.min(p().maxHp,p().hp+36);log('服用回春丹。');return;} if((p().inventory['聚气丹']||0)>0){p().inventory['聚气丹']--;p().qi=Math.min(p().maxQi,p().qi+28);log('服用聚气丹。');return;} if((p().inventory['灵米']||0)>0){p().inventory['灵米']--;p().stamina=Math.min(p().maxStamina,p().stamina+12);log('食用灵米。');return;} log('没有可用物品。'); },
-  talk(){ if(!spend(5))return; const n=W.npcs.find(x=>x.name===document.getElementById('npcSelect').value&&x.alive); if(!n){log('没有可互动NPC');return;} const add=rand(5,15)+(n.personality==='热情'?2:0)+(p().luck>=8?1:0)+(p().beauty>=85?1:0)+traitEffectScore(p().permanentTraits); n.relation+=add; p().social[n.name]=(p().social[n.name]||0)+add; p().insight=(p().insight||0)+rand(1,3); if(n.role==='长老' && Math.random()<0.25){ p().inventory['功法残卷']=(p().inventory['功法残卷']||0)+1; log(`${n.name}指点你并赠予功法残卷x1。`);} if(Math.random()<0.4){ const hidden=n.traits.filter(t=>!p().traitKnowledge.includes(t)); if(hidden.length){ const seen=pick(hidden); p().traitKnowledge.push(seen); log(`你通过交流识别了特性：【${seen}】。`);} } discoverUnknownTrait('论道交流',0.18); questProgress('寻访'); p().reputation+=1; log(narrateTalk(n)); log(`你与${n.name}围绕“${pick(TOPICS)}”论道，好感+${add}`); },
+  talk(){ if(!spend(5))return; const n=W.npcs.find(x=>x.name===document.getElementById('npcSelect').value&&x.alive); if(!n){log('没有可互动NPC');return;} const add=rand(5,15)+(n.personality==='热情'?2:0)+(effectiveLuck()>=8?1:0)+(p().beauty>=85?1:0)+traitEffectScore(p().permanentTraits); n.relation+=add; p().social[n.name]=(p().social[n.name]||0)+add; p().insight=(p().insight||0)+rand(1,3); if(n.role==='长老' && Math.random()<0.25){ p().inventory['功法残卷']=(p().inventory['功法残卷']||0)+1; log(`${n.name}指点你并赠予功法残卷x1。`);} if(Math.random()<0.4){ const hidden=n.traits.filter(t=>!p().traitKnowledge.includes(t)); if(hidden.length){ const seen=pick(hidden); p().traitKnowledge.push(seen); log(`你通过交流识别了特性：【${seen}】。`);} } discoverUnknownTrait('论道交流',0.18); questProgress('寻访'); p().reputation+=1; log(narrateTalk(n)); log(`你与${n.name}围绕“${pick(TOPICS)}”论道，好感+${add}`); },
   gift(){ if(!spend(4))return; const n=W.npcs.find(x=>x.name===document.getElementById('npcSelect').value&&x.alive); if(!n){log('没有可赠礼NPC');return;} if(p().stones<12){log('灵石不足，无法赠礼');return;} p().stones-=12; n.relation+=rand(10,20); log(`你向${n.name}赠礼，关系明显提升。`); },
   duel(){ if(!spend(8))return; const n=W.npcs.find(x=>x.name===document.getElementById('npcSelect').value&&x.alive); if(!n){log('没有可切磋NPC');return;} const score=atk()+rand(0,20)-Math.floor(n.cultivation/70); if(score>15){p().cultivation+=rand(10,28);p().reputation+=2;log(`你在切磋中压制${n.name}，修为提升。`);} else {p().hp=Math.max(1,p().hp-rand(8,20));log(`切磋失利，受伤。`);} },
-  propose(){ if(!spend(5))return; const n=W.npcs.find(x=>x.name===document.getElementById('npcSelect').value&&x.alive); if(!n){log('没有可结缘NPC');return;} if(p().spouse){log('你已有道侣。');return;} const score=n.relation + n.beauty/10 + (p().luck*2) + (n.personality==='热情'?8:0) + (p().beauty>=80?4:0); if(score>=95){ p().spouse=n.name; p().spouseGender=n.gender; p().reputation+=3; log(`你与${n.name}结为道侣。`);} else { log(`${n.name}婉拒了你的心意（条件不足）。`);} },
+  propose(){ if(!spend(5))return; const n=W.npcs.find(x=>x.name===document.getElementById('npcSelect').value&&x.alive); if(!n){log('没有可结缘NPC');return;} if(p().spouse){log('你已有道侣。');return;} const score=n.relation + n.beauty/10 + (effectiveLuck()*2) + (n.personality==='热情'?8:0) + (p().beauty>=80?4:0); if(score>=95){ p().spouse=n.name; p().spouseGender=n.gender; p().reputation+=3; log(`你与${n.name}结为道侣。`);} else { log(`${n.name}婉拒了你的心意（条件不足）。`);} },
   bond(){ if(!spend(4))return; const n=W.npcs.find(x=>x.name===document.getElementById('npcSelect').value&&x.alive); if(!n){log('没有可结拜NPC');return;} if(n.relation<45){log('好感不足，无法结拜。');return;} p().relationTags[n.name]='义兄弟'; n.relation+=6; log(`你与${n.name}义结金兰。`); },
   rival(){ if(!spend(4))return; const n=W.npcs.find(x=>x.name===document.getElementById('npcSelect').value&&x.alive); if(!n){log('没有可结仇NPC');return;} p().relationTags[n.name]='宿敌'; n.relation-=12; p().karma+=1; p().daoHeart=Math.max(-50,(p().daoHeart||0)-2); log(`你与${n.name}结下梁子。`); },
   fight_npc(){ if(!spend(9))return; const n=W.npcs.find(x=>x.name===document.getElementById('npcSelect').value&&x.alive); if(!n){log('没有可开战NPC');return;} if(W.battle){log('已有战斗进行中。');return;} startBattle({name:`${n.name}（被你挑衅）`,hp:rand(85,170),atk:rand(12,30),def:rand(3,12),agi:rand(6,18),rewardStone:rand(10,30),rewardCult:rand(20,60)}); n.relation-=16; p().karma+=2; },
