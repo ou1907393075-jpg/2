@@ -41,6 +41,9 @@
     .chip{display:inline-flex;align-items:center;padding:4px 9px;border-radius:999px;background:#2a2a1f;border:1px solid #9d835742;color:#f3e2c1;font-size:12px}
     .card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;margin-top:8px}
     .card{background:#171d17cc;border:1px solid #7e6b4742;border-radius:10px;padding:8px 10px}
+    .scene-box{margin-top:10px;padding:10px 12px;border-radius:12px;background:linear-gradient(160deg,#201d16,#17140f);border:1px solid #9f845555;box-shadow:inset 0 1px 0 #fff1}
+    .scene-title{font-size:14px;color:#f0d9ad;margin-bottom:4px}
+    .scene-text{font-size:13px;color:#dac7a5;line-height:1.8}
     .view-panel{display:none}
     .view-panel.active{display:block}
   </style>
@@ -50,20 +53,20 @@
   <h1>太虚问道 · 修仙模拟人生</h1>
   <div class="small" style="margin:-8px 0 10px">古风修仙界面｜墨绿金纹视觉｜单面板切换</div>
   <div class="tabbar" id="tabbar">
-    <button data-view-target="startPanel" class="active">开局</button>
-    <button data-view-target="statusPanel">人物属性</button>
-    <button data-view-target="mapPanel">地图移动</button>
-    <button data-view-target="cultivatePanel">修炼</button>
-    <button data-view-target="explorePanel">探索</button>
-    <button data-view-target="tradePanel">交易工坊</button>
-    <button data-view-target="socialPanel">NPC交流</button>
-    <button data-view-target="conflictPanel">冲突</button>
-    <button data-view-target="sectPanel">宗门任务</button>
-    <button data-view-target="estatePanel">地产建造</button>
-    <button data-view-target="familyPanel">家族传承</button>
-    <button data-view-target="systemPanel">系统总览</button>
-    <button data-view-target="battlePanel" id="battleTab">战斗</button>
-    <button data-view-target="logPanel">日志</button>
+    <button data-view-target="startPanel" class="active">☯ 开局</button>
+    <button data-view-target="statusPanel">🧾 人物属性</button>
+    <button data-view-target="mapPanel">🗺️ 地图移动</button>
+    <button data-view-target="cultivatePanel">🕯️ 修炼</button>
+    <button data-view-target="explorePanel">⛰️ 探索</button>
+    <button data-view-target="tradePanel">🏮 交易工坊</button>
+    <button data-view-target="socialPanel">🤝 NPC交流</button>
+    <button data-view-target="conflictPanel">⚔️ 冲突</button>
+    <button data-view-target="sectPanel">🛕 宗门任务</button>
+    <button data-view-target="estatePanel">🏯 地产建造</button>
+    <button data-view-target="familyPanel">👨‍👩‍👧 家族传承</button>
+    <button data-view-target="systemPanel">📜 系统总览</button>
+    <button data-view-target="battlePanel" id="battleTab">🔥 战斗</button>
+    <button data-view-target="logPanel">📖 日志</button>
   </div>
 
   <div class="panel view-panel active" id="startPanel">
@@ -95,6 +98,7 @@
   <div class="panel view-panel" id="statusPanel">
     <h3>角色与状态</h3>
     <div id="status"></div>
+    <div id="immersionBoard" class="scene-box"></div>
     <div class="small">每次行动消耗时日；回合结束恢复气血/真气/可用时日并触发世界演化。</div>
   </div>
 
@@ -264,6 +268,17 @@ const DIALOGUE_TEMPLATES=[
   '你们在风雪中争辩{topic}，最终各有所得。'
 ];
 const TOPICS=['剑意','丹道','阵理','因果','心魔','天劫','家族传承','宗门规矩','人间烟火'];
+const LOC_LORE={
+  '青石镇':'炊烟绕梁，凡人与散修共居，适合补给与打听消息。',
+  '灵溪谷':'溪雾缭绕，灵草丰饶，常有低阶灵兽出没。',
+  '白鹿书院':'文气与道韵并存，悟性高者在此常有顿悟。',
+  '天火山':'地火翻涌，炼器炼体者趋之若鹜。',
+  '玄霜海':'寒潮席卷，水行与冰系机缘并存。',
+  '万剑城':'剑修云集，切磋与恩怨都来得更快。',
+  '古战场':'残阵未消，杀伐因果最重，风险与收获并存。',
+  '丹霞谷':'丹香不绝，炼丹、交易与宗门往来频繁。',
+  '黑风岭':'妖风夜起，盗修潜伏，夜行需谨慎。'
+};
 const BATTLE_TEXT_HIT=['剑光一闪，命中要害','身法一错，反手重击','真气鼓荡，掌风如雷','灵压骤升，一击破防','你抓住破绽，连斩数剑'];
 const BATTLE_TEXT_TAKEN=['胸口一闷，气血翻涌','护体真气被撕开缺口','脚步踉跄，险些倒地','肩头中招，痛楚钻心','你强行稳住心神'];
 const BUILDING_PREFIX=['青云','太虚','玄武','赤炎','寒霜','丹霞','万剑','天机','归元','龙象','星宿','紫霄','灵溪','长生','藏经','护山','炼器','炼丹','试炼','观星'];
@@ -351,6 +366,15 @@ function discoverUnknownTrait(reason, rate=0.2){
   const found=pick(unknown);
   p().traitKnowledge.push(found);
   log(`你在${reason}中识别了隐藏特性：【${found}】。`);
+}
+function sceneNarration(){
+  const loc=p().location;
+  const lore=LOC_LORE[loc]||'天地寂寥，机缘与杀机并行。';
+  const season=currentSeason();
+  const weather=W.weather;
+  const mood = p().karma>=10?'你隐约感到因果缠身，行事宜慎。':p().karma<=-10?'你道心澄明，外魔难侵。':'你心境尚稳，可继续谋划长线修行。';
+  const route = p().stamina<10?'可用时日不多，建议先休整或就近处理事务。':p().stamina<20?'时日中等，适合完成1~2项关键行动。':'时日充裕，可安排“修炼+探索/社交”的连段。';
+  return {title:`${season}季 · ${weather} · ${loc}`,text:`${lore} ${mood} ${route}`};
 }
 
 function realmIndexByCult(v){
@@ -448,6 +472,8 @@ function render(){
   const knownTraits=allTraits.filter(t=>p().traitKnowledge.includes(t));
   const hiddenCount=allTraits.length-knownTraits.length;
   document.getElementById('traitPanel').innerHTML=`特性总览：已识别 ${knownTraits.length} 条；未知 ${hiddenCount} 条。<br>已识别：${knownTraits.slice(0,20).join('、')||'暂无'}${hiddenCount?'<br>未知特性在 NPC 面板中会显示为“未知特性”，可通过交流、历练、岁月推演逐步识别。':''}`;
+  const scene=sceneNarration();
+  document.getElementById('immersionBoard').innerHTML=`<div class='scene-title'>${scene.title}</div><div class='scene-text'>${scene.text}</div>`;
   document.getElementById('questBoard').innerHTML=`<div class='small'>任务榜：${W.questBoard.map(q=>`${q.title}[${q.type}] ${q.progress}/${q.target}`).join('｜')||'空'}<br>进行中：${W.activeQuests.map(q=>`${q.title} ${q.progress}/${q.target}`).join('｜')||'无'}</div>`;
   document.getElementById('heirSelect').innerHTML = p().children.map((c,i)=>`<option value='${i}'>${c.name}(${c.gender||'?'},资质${c.talent})</option>`).join('') || '<option value=\"\">无可继承子嗣</option>';
 
