@@ -101,10 +101,12 @@
         <select id="ambitionInput"></select>
       </label>
       <button id="newBtn">新人生</button>
+      <button id="rollBtn" class="warn">随机开局配置</button>
       <button id="saveBtn" class="alt">保存</button>
       <button id="loadBtn" class="alt">读取</button>
       <button id="resetBtn" class="bad">清空存档</button>
     </div>
+    <div id="startPreview" class="scene-box"></div>
     <div class="small">这版加入：地图移动、时日推进、战斗内技能回合、任务看板、NPC目标互动、队伍管理、家族子嗣培养、可持续存档。</div>
   </div>
 
@@ -489,6 +491,23 @@ function initCreationOptions(){
   a.innerHTML=Object.entries(AMBITIONS).map(([k,v])=>`<option value='${k}'>${k}｜${v.desc}</option>`).join('');
   t.innerHTML=ORIGIN_TRAITS.map(x=>`<option value='${x}'>${x}</option>`).join('');
 }
+function estimateOpening(){
+  const bg=document.getElementById('bgInput').value;
+  const destiny=document.getElementById('destinyInput').value;
+  const ambition=document.getElementById('ambitionInput').value;
+  const trait=document.getElementById('originTraitInput').value;
+  const b=BACKGROUNDS[bg], d=DESTINIES[destiny], a=AMBITIONS[ambition];
+  const stone=(b.stones||0)+(d.stones||0)+(a.stones||0);
+  const luck=`${Math.max(1,1+b.luck+d.luck+(a.luck||0))} ~ ${Math.min(10,10+b.luck+d.luck+(a.luck||0))}`;
+  const talent=`${1+b.talent+d.talent} ~ ${4+b.talent+d.talent}`;
+  const tags=[trait,...(d.traits||[])];
+  return {bg,destiny,ambition,stone,luck,talent,tags};
+}
+function renderStartPreview(){
+  const e=estimateOpening();
+  const risk = e.destiny==='逆命孤星'?'高风险高成长':'稳健成长';
+  document.getElementById('startPreview').innerHTML=`<div class='scene-title'>开局推演预览</div><div class='scene-text'>背景：${e.bg}｜天命：${e.destiny}｜志向：${e.ambition}<br>预计初始灵石：${e.stone}｜气运区间：${e.luck}｜天赋区间：${e.talent}<br>初始显性特质：${e.tags.join('、')}｜路线评价：${risk}</div>`;
+}
 
 function render(){
   if(!W){document.getElementById('status').textContent='点击“新人生”开始'; document.getElementById('feedbackStats').textContent='状态摘要将在开始后显示。'; return}
@@ -756,6 +775,13 @@ function bind(){
   panelOrder=[...document.querySelectorAll('#tabbar button[data-view-target]')].map(b=>b.dataset.viewTarget);
   document.querySelectorAll('#tabbar button[data-view-target]').forEach(btn=>btn.onclick=()=>switchPanel(btn.dataset.viewTarget));
   document.getElementById('newBtn').onclick=()=>{W=newWorld(document.getElementById('nameInput').value.trim(), document.getElementById('genderInput').value, document.getElementById('bgInput').value, document.getElementById('destinyInput').value, document.getElementById('originTraitInput').value, document.getElementById('ambitionInput').value);W.questBoard=[genQuest(),genQuest(),genQuest()];W.player.traitKnowledge=[...W.player.permanentTraits.slice(0,3)];W.player.mainTechnique=W.player.knownTechniques[0]||null;if(W.player.background!==document.getElementById('bgInput').value){log('你所选背景条件不足，已自动降格为可用背景。');}log(`你选择了天命【${W.player.destiny}】、志向【${W.player.ambition}】与开局特质【${document.getElementById('originTraitInput').value}】。`); switchPanel('statusPanel'); render();};
+  document.getElementById('rollBtn').onclick=()=>{
+    const pickVal=id=>{ const el=document.getElementById(id); el.selectedIndex=rand(0,el.options.length-1); };
+    if(Math.random()<0.6) document.getElementById('nameInput').value=pick(NAMES)+pick(['真人','散人','居士','子']);
+    pickVal('bgInput'); pickVal('destinyInput'); pickVal('originTraitInput'); pickVal('ambitionInput');
+    renderStartPreview();
+  };
+  ['bgInput','destinyInput','originTraitInput','ambitionInput'].forEach(id=>document.getElementById(id).onchange=renderStartPreview);
   document.getElementById('saveBtn').onclick=()=>{if(!W)return;save();render();};
   document.getElementById('loadBtn').onclick=()=>{load();render();};
   document.getElementById('resetBtn').onclick=()=>{localStorage.removeItem('xianxia_web_save');alert('存档已清空');};
@@ -764,7 +790,7 @@ function bind(){
   document.querySelectorAll('button[data-battle]').forEach(b=>b.onclick=()=>{if(!W||!W.battle)return; battleAction(b.dataset.battle); render();});
 }
 
-initCreationOptions(); bind(); render();
+initCreationOptions(); renderStartPreview(); bind(); render();
 </script>
 </body>
 </html>
