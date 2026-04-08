@@ -44,8 +44,6 @@
     .scene-box{margin-top:10px;padding:10px 12px;border-radius:12px;background:linear-gradient(160deg,#201d16,#17140f);border:1px solid #9f845555;box-shadow:inset 0 1px 0 #fff1}
     .scene-title{font-size:14px;color:#f0d9ad;margin-bottom:4px}
     .scene-text{font-size:13px;color:#dac7a5;line-height:1.8}
-    .pager{display:flex;gap:8px;align-items:center;margin:0 0 10px}
-    .pager .now{font-size:13px;color:#e9d8b3;padding:6px 10px;border:1px solid #8d754b66;border-radius:10px;background:#17130e}
     #feedbackDock{position:fixed;right:16px;bottom:14px;width:min(420px,92vw);z-index:20;background:#11160fee;border:1px solid #8a724f7a;border-radius:12px;box-shadow:0 12px 24px #0008;padding:10px}
     #feedbackDock h4{margin:0 0 6px;font-size:13px;color:#f1ddb6}
     #feedbackLatest{font-size:12px;color:#e9d9bc;line-height:1.6;max-height:120px;overflow:auto}
@@ -73,11 +71,6 @@
     <button data-view-target="systemPanel">📜 系统总览</button>
     <button data-view-target="battlePanel" id="battleTab">🔥 战斗</button>
     <button data-view-target="logPanel">📖 日志</button>
-  </div>
-  <div class="pager">
-    <button id="prevPanelBtn" class="alt">← 上一页</button>
-    <div id="panelNow" class="now">当前页：开局</div>
-    <button id="nextPanelBtn" class="alt">下一页 →</button>
   </div>
 
   <div class="panel view-panel active" id="startPanel">
@@ -332,15 +325,10 @@ const stage=v=>STAGES.reduce((s,[n,t])=>v>=n?t:s,'凡人');
 const p=()=>W.player;
 let activePanel='startPanel';
 let panelOrder=[];
-function refreshPanelNow(){
-  const btn=document.querySelector(`#tabbar button[data-view-target='${activePanel}']`);
-  document.getElementById('panelNow').textContent=`当前页：${btn?btn.textContent.replace(/^[^\\u4e00-\\u9fa5A-Za-z0-9]+/,'').trim():'未知'}`;
-}
 function switchPanel(id){
   activePanel=id;
   document.querySelectorAll('.view-panel').forEach(el=>el.classList.toggle('active', el.id===id));
   document.querySelectorAll('#tabbar button[data-view-target]').forEach(btn=>btn.classList.toggle('active', btn.dataset.viewTarget===id));
-  refreshPanelNow();
 }
 
 function buildTraitPool(){
@@ -564,7 +552,7 @@ function render(){
     document.getElementById('battleStatus').innerHTML=`敌人：${b.name}｜HP ${Math.max(0,b.hp)}<br>你：HP ${p().hp}/${p().maxHp}｜Qi ${p().qi}/${p().maxQi}`;
   }
   document.getElementById('log').textContent=W.logs.slice(-220).join('\n');
-  document.getElementById('feedbackStats').innerHTML=`${p().name}｜${stage(p().cultivation)}｜时日${p().stamina}/${p().maxStamina}｜疲劳${p().fatigue||0}｜道心${p().daoHeart||0}｜感悟${p().insight||0}`;
+  document.getElementById('feedbackStats').innerHTML=`${p().name}｜${stage(p().cultivation)}｜HP ${p().hp}/${p().maxHp}｜Qi ${p().qi}/${p().maxQi}｜时日${p().stamina}/${p().maxStamina}｜疲劳${p().fatigue||0}｜道心${p().daoHeart||0}｜感悟${p().insight||0}`;
   syncSelectors();
 }
 
@@ -703,6 +691,17 @@ function battleAction(type){
   enemyTurn();
 }
 
+const ACT_PANEL_MAP={
+  cultivate:'cultivatePanel',study:'cultivatePanel',breakthrough:'cultivatePanel',rest:'cultivatePanel',set_main_tech:'cultivatePanel',
+  explore:'explorePanel',dungeon:'explorePanel',treasure:'explorePanel',fate_event:'explorePanel',next:'explorePanel',
+  shop:'tradePanel',craft:'tradePanel',use_item:'tradePanel',
+  talk:'socialPanel',gift:'socialPanel',duel:'socialPanel',propose:'socialPanel',bond:'socialPanel',rival:'socialPanel',recruit:'socialPanel',
+  fight_npc:'conflictPanel',extort_npc:'conflictPanel',rescue:'conflictPanel',
+  join_faction:'sectPanel',sect_duty:'sectPanel',refresh_quests:'sectPanel',accept_quest:'sectPanel',
+  buy_land:'estatePanel',construct:'estatePanel',
+  family:'familyPanel',fertility:'familyPanel',inherit:'familyPanel',heir:'familyPanel'
+};
+
 const acts={
   move(){ if(!spend(5))return; p().location=document.getElementById('destSelect').value||p().location; questProgress('游历'); log(`你抵达 ${p().location}。`); },
   cultivate(){ if(!spend(8))return; const costStone=6, costQi=14; if(p().stones<costStone||p().qi<costQi){log('修炼需要更多资源：灵石≥6且真气≥14。');return;} p().stones-=costStone; p().qi-=costQi; const fatigueDebuff=Math.floor((p().fatigue||0)/25); const gainExp=rand(8,16)+p().talent+seasonalCultBonus()+techniqueHarmony()+mainTechBonus()-fatigueDebuff; p().cultivationExp+=Math.max(2,gainExp); let gain=0; while(p().cultivationExp>=expNeed() && !p().realmLock){ p().cultivationExp-=expNeed(); const step=rand(6,14)+mainTechBonus()-fatigueDebuff; gain+=Math.max(2,step); p().cultivation+=Math.max(2,step); } p().insight=(p().insight||0)+rand(1,3); discoverUnknownTrait('闭关修炼',0.22); log(`你苦修一季（${currentSeason()}季），经验+${Math.max(2,gainExp)}${gain?`，修为+${gain}`:''}。`); },
@@ -756,18 +755,16 @@ function load(){const raw=localStorage.getItem('xianxia_web_save');if(!raw){aler
 function bind(){
   panelOrder=[...document.querySelectorAll('#tabbar button[data-view-target]')].map(b=>b.dataset.viewTarget);
   document.querySelectorAll('#tabbar button[data-view-target]').forEach(btn=>btn.onclick=()=>switchPanel(btn.dataset.viewTarget));
-  document.getElementById('prevPanelBtn').onclick=()=>{ const i=panelOrder.indexOf(activePanel); const n=(i-1+panelOrder.length)%panelOrder.length; switchPanel(panelOrder[n]); };
-  document.getElementById('nextPanelBtn').onclick=()=>{ const i=panelOrder.indexOf(activePanel); const n=(i+1)%panelOrder.length; switchPanel(panelOrder[n]); };
   document.getElementById('newBtn').onclick=()=>{W=newWorld(document.getElementById('nameInput').value.trim(), document.getElementById('genderInput').value, document.getElementById('bgInput').value, document.getElementById('destinyInput').value, document.getElementById('originTraitInput').value, document.getElementById('ambitionInput').value);W.questBoard=[genQuest(),genQuest(),genQuest()];W.player.traitKnowledge=[...W.player.permanentTraits.slice(0,3)];W.player.mainTechnique=W.player.knownTechniques[0]||null;if(W.player.background!==document.getElementById('bgInput').value){log('你所选背景条件不足，已自动降格为可用背景。');}log(`你选择了天命【${W.player.destiny}】、志向【${W.player.ambition}】与开局特质【${document.getElementById('originTraitInput').value}】。`); switchPanel('statusPanel'); render();};
   document.getElementById('saveBtn').onclick=()=>{if(!W)return;save();render();};
   document.getElementById('loadBtn').onclick=()=>{load();render();};
   document.getElementById('resetBtn').onclick=()=>{localStorage.removeItem('xianxia_web_save');alert('存档已清空');};
   document.getElementById('moveBtn').onclick=()=>{if(!W)return;acts.move();render();};
-  document.querySelectorAll('button[data-act]').forEach(b=>b.onclick=()=>{if(!W){alert('请先开始新人生');return;} if(p().dead && b.dataset.act!=='inherit'){log('你已死亡，只能选择“继承继续”或重开。');render();return;} if(W.battle&&b.dataset.act!=='use_item'&&b.dataset.act!=='next'){log('战斗中请先处理战斗回合。');render();return;} acts[b.dataset.act](); checkDeath(); render();});
+  document.querySelectorAll('button[data-act]').forEach(b=>b.onclick=()=>{if(!W){alert('请先开始新人生');return;} if(p().dead && b.dataset.act!=='inherit'){log('你已死亡，只能选择“继承继续”或重开。');render();return;} if(W.battle&&b.dataset.act!=='use_item'&&b.dataset.act!=='next'){log('战斗中请先处理战斗回合。');render();return;} const target=ACT_PANEL_MAP[b.dataset.act]; if(target) switchPanel(target); acts[b.dataset.act](); checkDeath(); render();});
   document.querySelectorAll('button[data-battle]').forEach(b=>b.onclick=()=>{if(!W||!W.battle)return; battleAction(b.dataset.battle); render();});
 }
 
-initCreationOptions(); bind(); refreshPanelNow(); render();
+initCreationOptions(); bind(); render();
 </script>
 </body>
 </html>
