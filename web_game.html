@@ -87,6 +87,15 @@
           <option>天骄嫡传</option>
         </select>
       </label>
+      <label>先天气运（天命）：
+        <select id="destinyInput"></select>
+      </label>
+      <label>开局特质：
+        <select id="originTraitInput"></select>
+      </label>
+      <label>修行志向：
+        <select id="ambitionInput"></select>
+      </label>
       <button id="newBtn">新人生</button>
       <button id="saveBtn" class="alt">保存</button>
       <button id="loadBtn" class="alt">读取</button>
@@ -258,6 +267,21 @@ const BACKGROUNDS={
   '世家旁支':{stones:45,luck:2,talent:2,tech:1,desc:'资源中上，有家族扶持'},
   '天骄嫡传':{stones:60,luck:3,talent:4,tech:2,desc:'开局强势，但对天赋有要求'}
 };
+const DESTINIES={
+  '凡尘问道':{luck:0,talent:0,stones:0,traits:['坚韧'],desc:'中庸稳健，适合新手推进'},
+  '天眷之人':{luck:2,talent:1,stones:10,traits:['天运','慧心'],desc:'更容易遇到机缘'},
+  '逆命孤星':{luck:-1,talent:2,stones:20,traits:['孤锋','煞骨'],desc:'前期更猛但因果更重'},
+  '丹道灵胚':{luck:1,talent:1,stones:8,traits:['药感','灵嗅'],desc:'更适合炼丹与资源积累'},
+  '剑心通明':{luck:0,talent:2,stones:5,traits:['剑悟','清识'],desc:'战斗与悟道效率更高'}
+};
+const AMBITIONS={
+  '长生久视':{cult:8,rep:0,karma:0,desc:'专注修炼成长'},
+  '名震八荒':{cult:0,rep:4,karma:1,desc:'偏向声望与事件'},
+  '富甲一方':{cult:0,rep:0,karma:0,stones:25,desc:'开局资源更多'},
+  '守护家族':{cult:0,rep:1,karma:-1,clan:8,desc:'家族线更强'},
+  '逍遥散修':{cult:4,rep:1,karma:-1,luck:1,desc:'全面平衡，偏探索'}
+};
+const ORIGIN_TRAITS=['坚韧','慧心','剑悟','药感','灵嗅','孤锋','清识','玄骨','天运','灵息','雷纹','月眸'];
 const SECT_RANKS=['外门弟子','内门弟子','真传弟子','执事','长老'];
 const SEASONS=['春','夏','秋','冬'];
 const DIALOGUE_TEMPLATES=[
@@ -386,20 +410,26 @@ function expNeed(){
   const r=realmIndexByCult(p().cultivation);
   return 70 + r*55;
 }
-function newWorld(name, gender, background){
+function newWorld(name, gender, background, destinyName, originTrait, ambitionName){
   const bg=BACKGROUNDS[background]||BACKGROUNDS['寒门散修'];
+  const destiny=DESTINIES[destinyName]||DESTINIES['凡尘问道'];
+  const ambition=AMBITIONS[ambitionName]||AMBITIONS['长生久视'];
   const root=pick(ROOTS);
   const rootTalent = root==='天灵根'?4:root==='上品灵根'?3:root==='中品灵根'?2:1;
-  let baseTalent = rootTalent + bg.talent + rand(0,3);
+  let baseTalent = rootTalent + bg.talent + (destiny.talent||0) + rand(0,3);
   let finalBg = background;
   if(background==='天骄嫡传' && baseTalent<7){ finalBg='世家旁支'; }
   const actualBg = BACKGROUNDS[finalBg];
+  const fixedTrait=originTrait||pick(ORIGIN_TRAITS);
+  const mergedPermanent=[fixedTrait,...(destiny.traits||[]),...sampleTraits(8)];
+  const uniquePermanent=[...new Set(mergedPermanent)].slice(0,10);
+  const startStones=actualBg.stones+(destiny.stones||0)+(ambition.stones||0);
   return {
     turn:1,
-    player:{name:name||'无名散修',age:16,location:'青石镇',hp:120,maxHp:120,qi:80,maxQi:80,stamina:42,maxStamina:42,cultivation:0,stones:actualBg.stones,reputation:0,karma:0,title:'无名散修',
-      faction:'散修',weapon:0,armor:0,artifact:null,artifactCharge:0,inventory:{'回春丹':2,'聚气丹':2,'灵米':3,'阴阳生息丹':0,'功法残卷':0,'破境丹':0},party:[],social:{},spouse:null,spouseGender:null,children:[],clanPrestige:0,clanName:(name||'无名散修')+'家',
-      gender:gender||'男',background:finalBg,spiritRoot:root,physique:pick(PHYSIQUES),luck:Math.min(10,rand(1,10)+actualBg.luck),beauty:rand(35,96),talent:baseTalent,cultivationExp:0,
-      permanentTraits:sampleTraits(8),tempTraits:sampleTraits(5).map(t=>({name:t,duration:rand(2,6)})),evolvingTraits:sampleTraits(4),traitKnowledge:[],
+    player:{name:name||'无名散修',age:16,location:'青石镇',hp:120,maxHp:120,qi:80,maxQi:80,stamina:42,maxStamina:42,cultivation:ambition.cult||0,stones:startStones,reputation:ambition.rep||0,karma:ambition.karma||0,title:'无名散修',
+      faction:'散修',weapon:0,armor:0,artifact:null,artifactCharge:0,inventory:{'回春丹':2,'聚气丹':2,'灵米':3,'阴阳生息丹':0,'功法残卷':0,'破境丹':0},party:[],social:{},spouse:null,spouseGender:null,children:[],clanPrestige:ambition.clan||0,clanName:(name||'无名散修')+'家',
+      gender:gender||'男',background:finalBg,destiny:destinyName||'凡尘问道',ambition:ambitionName||'长生久视',spiritRoot:root,physique:pick(PHYSIQUES),luck:Math.min(10,rand(1,10)+actualBg.luck+(destiny.luck||0)+(ambition.luck||0)),beauty:rand(35,96),talent:baseTalent,cultivationExp:0,
+      permanentTraits:uniquePermanent,tempTraits:sampleTraits(5).map(t=>({name:t,duration:rand(2,6)})),evolvingTraits:sampleTraits(4),traitKnowledge:[],
       knownTechniques:Array.from({length:1+actualBg.tech},()=>pick(TECH_POOL)),mainTechnique:null,artifactBag:[pick(ITEM_POOL)],sameSexConceiveReady:false,realmLock:false,dead:false,sectContribution:0,sectRank:SECT_RANKS[0],
       landOwned:0,buildings:[],materials:{木材:20,灵石矿:5,玄铁:2,灵木:1},rareItems:[],
       relationTags:{},
@@ -424,6 +454,14 @@ function syncSelectors(){
   const ts=document.getElementById('techSelect');
   ts.innerHTML=(p().knownTechniques||[]).map(t=>`<option value='${t}' ${p().mainTechnique===t?'selected':''}>${t}</option>`).join('')||'<option>暂无功法</option>';
 }
+function initCreationOptions(){
+  const d=document.getElementById('destinyInput');
+  const a=document.getElementById('ambitionInput');
+  const t=document.getElementById('originTraitInput');
+  d.innerHTML=Object.entries(DESTINIES).map(([k,v])=>`<option value='${k}'>${k}｜${v.desc}</option>`).join('');
+  a.innerHTML=Object.entries(AMBITIONS).map(([k,v])=>`<option value='${k}'>${k}｜${v.desc}</option>`).join('');
+  t.innerHTML=ORIGIN_TRAITS.map(x=>`<option value='${x}'>${x}</option>`).join('');
+}
 
 function render(){
   if(!W){document.getElementById('status').textContent='点击“新人生”开始'; return}
@@ -440,6 +478,7 @@ function render(){
   <div class='card'>称号：${p().title}<br>门派：${p().faction}（${p().sectRank}）<br>门派声望：${p().factionRep[p().faction]}</div>
   <div class='card'>灵石：${p().stones}<br>声望：${p().reputation}<br>因果：${p().karma}</div>
   <div class='card'>性别：${p().gender}<br>背景：${p().background}<br>时令：${currentSeason()}季</div>
+  <div class='card'>天命：${p().destiny||'凡尘问道'}<br>志向：${p().ambition||'长生久视'}<br>当前主城：${p().location}</div>
   <div class='card'>灵根：${p().spiritRoot}<br>体质：${p().physique}<br>气运/天赋：${p().luck}/${p().talent}</div>
 </div>
 <div style="margin-top:8px" class='small'>岁月流逝缓慢但不可逆。</div>
@@ -655,11 +694,11 @@ const acts={
 };
 
 function save(){localStorage.setItem('xianxia_web_save',JSON.stringify(W));log('存档成功。')}
-function load(){const raw=localStorage.getItem('xianxia_web_save');if(!raw){alert('没有存档');return;}W=JSON.parse(raw);if(!W.player.mainTechnique && Array.isArray(W.player.knownTechniques))W.player.mainTechnique=W.player.knownTechniques[0]||null;log('读取存档成功。');switchPanel('statusPanel');}
+function load(){const raw=localStorage.getItem('xianxia_web_save');if(!raw){alert('没有存档');return;}W=JSON.parse(raw);if(!W.player.mainTechnique && Array.isArray(W.player.knownTechniques))W.player.mainTechnique=W.player.knownTechniques[0]||null;W.player.destiny=W.player.destiny||'凡尘问道';W.player.ambition=W.player.ambition||'长生久视';log('读取存档成功。');switchPanel('statusPanel');}
 
 function bind(){
   document.querySelectorAll('#tabbar button[data-view-target]').forEach(btn=>btn.onclick=()=>switchPanel(btn.dataset.viewTarget));
-  document.getElementById('newBtn').onclick=()=>{W=newWorld(document.getElementById('nameInput').value.trim(), document.getElementById('genderInput').value, document.getElementById('bgInput').value);W.questBoard=[genQuest(),genQuest(),genQuest()];W.player.traitKnowledge=[...W.player.permanentTraits.slice(0,3)];W.player.mainTechnique=W.player.knownTechniques[0]||null;if(W.player.background!==document.getElementById('bgInput').value){log('你所选背景条件不足，已自动降格为可用背景。');} switchPanel('statusPanel'); render();};
+  document.getElementById('newBtn').onclick=()=>{W=newWorld(document.getElementById('nameInput').value.trim(), document.getElementById('genderInput').value, document.getElementById('bgInput').value, document.getElementById('destinyInput').value, document.getElementById('originTraitInput').value, document.getElementById('ambitionInput').value);W.questBoard=[genQuest(),genQuest(),genQuest()];W.player.traitKnowledge=[...W.player.permanentTraits.slice(0,3)];W.player.mainTechnique=W.player.knownTechniques[0]||null;if(W.player.background!==document.getElementById('bgInput').value){log('你所选背景条件不足，已自动降格为可用背景。');}log(`你选择了天命【${W.player.destiny}】、志向【${W.player.ambition}】与开局特质【${document.getElementById('originTraitInput').value}】。`); switchPanel('statusPanel'); render();};
   document.getElementById('saveBtn').onclick=()=>{if(!W)return;save();render();};
   document.getElementById('loadBtn').onclick=()=>{load();render();};
   document.getElementById('resetBtn').onclick=()=>{localStorage.removeItem('xianxia_web_save');alert('存档已清空');};
@@ -668,7 +707,7 @@ function bind(){
   document.querySelectorAll('button[data-battle]').forEach(b=>b.onclick=()=>{if(!W||!W.battle)return; battleAction(b.dataset.battle); render();});
 }
 
-bind(); render();
+initCreationOptions(); bind(); render();
 </script>
 </body>
 </html>
